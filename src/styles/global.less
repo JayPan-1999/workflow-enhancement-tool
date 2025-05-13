@@ -1,0 +1,183 @@
+/* Global styles */
+:root {
+    --el-color-primary: #8D00C9;
+}
+
+/* Reset styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: @text-color;
+    background-color: @background-color;
+    font-size: @font-size-base;
+    line-height: 1.5;
+}
+
+a {
+    color: @primary-color;
+    text-decoration: none;
+    transition: color @transition-duration;
+
+    &:hover {
+        color: lighten(@primary-color, 10%);
+    }
+}
+
+/* Common utility classes */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.mt-xs {
+    margin-top: @spacing-xs;
+}
+
+.mt-sm {
+    margin-top: @spacing-sm;
+}
+
+.mt-md {
+    margin-top: @spacing-md;
+}
+
+.mt-lg {
+    margin-top: @spacing-lg;
+}
+
+.mt-xl {
+    margin-top: @spacing-xl;
+}
+
+.mb-xs {
+    margin-bottom: @spacing-xs;
+}
+
+.mb-sm {
+    margin-bottom: @spacing-sm;
+}
+
+.mb-md {
+    margin-bottom: @spacing-md;
+}
+
+.mb-lg {
+    margin-bottom: @spacing-lg;
+}
+
+.mb-xl {
+    margin-bottom: @spacing-xl;
+}
+
+/* Element Plus overrides */
+.el-button {
+    &--primary {
+        background-color: @primary-color;
+
+        &:hover,
+        &:focus {
+            background-color: lighten(@primary-color, 10%);
+        }
+    }
+
+    &--success {
+        background-color: @success-color;
+
+        &:hover,
+        &:focus {
+            background-color: lighten(@success-color, 10%);
+        }
+    }
+}
+
+.el-table {
+    border-radius: @border-radius;
+    overflow: hidden;
+    box-shadow: @box-shadow-light;
+
+    th {
+        background-color: lighten(@primary-color, 35%) !important;
+        color: @text-color !important;
+        font-weight: bold;
+    }
+}
+
+.el-dialog {
+    border-radius: @border-radius-large;
+    overflow: hidden;
+
+    &__header {
+        background-color: @primary-color;
+        padding: @spacing-md !important;
+
+        .el-dialog__title {
+            color: white;
+            font-weight: bold;
+        }
+    }
+}
+
+/* Animations */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity @transition-duration;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .hide-on-tablet {
+        display: none !important;
+    }
+}
+
+@media (min-width: 1201px) {
+    .hide-on-desktop {
+        display: none !important;
+    }
+}

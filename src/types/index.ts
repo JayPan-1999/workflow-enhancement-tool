@@ -1,0 +1,38 @@
+export interface FileType {
+    name: string;
+    required: boolean;
+    fileType: string;
+}
+
+export interface FileCategory {
+    label: string;
+    value: string;
+    files: FileType[];
+}
+
+export interface UploadedFile {
+    categoryId: string;
+    fileTypeId: string;
+    file: File;
+    previewUrl?: string;
+}
+
+export interface TableField {
+    fieldName: string;
+    value: string | number;
+    editable: boolean;
+}
+
+export interface TableData {
+    id: string;
+    category: string;
+    fileName: string;
+    fields: TableField[];
+}
+
+export interface ApiResponse {
+    success: boolean;
+    data?: TableData[];
+    fields?: string[];
+    message?: string;
+} 
