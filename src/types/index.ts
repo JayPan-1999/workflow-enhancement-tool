@@ -35,4 +35,16 @@ export interface ApiResponse {
     data?: TableData[];
     fields?: string[];
     message?: string;
+    jsonData?: Record<string, any>;
+}
+
+export interface JsonTab {
+    name: string;
+    type: 'object' | 'array';
+    data: any;
+}
+
+export interface NestedTableData {
+    header: string[];
+    rows: any[][];
 } 

@@ -54,27 +54,63 @@
       <el-button type="primary" @click="generateValue" :disabled="!canGenerate">Generate Value</el-button>
     </div>
 
-    <div v-if="tableData.length > 0" class="results-section mt-xl">
-      <div class="table-actions flex mb-md">
-        <el-button @click="exportToCSVOrExcel('Excel')">Export as Excel</el-button>
-        <el-button @click="exportToCSVOrExcel('CSV')">Export as CSV</el-button>
-      </div>
+    <!-- New Dynamic JSON Result Section -->
+    <div v-if="jsonTabs.length > 0" class="results-section mt-xl">
+      <el-tabs v-model="activeTab" type="card">
+        <el-tab-pane v-for="(tab, index) in jsonTabs" :key="tab.name" :label="tab.name" :name="String(index)">
 
-      <el-table ref="multipleTableRef" :data="tableData" style="width: 100%">
-        <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column prop="category" label="Category" />
-        <el-table-column prop="fileName" label="File Name" />
+          <!-- Object data shown as Description list -->
+          <div v-if="tab.type === 'object'" class="tab-content-object">
+            <el-descriptions :title="tab.name" :column="2" border>
+              <template v-for="(value, key) in tab.data" :key="key">
+                <!-- If the value is an array, display as a table -->
+                <el-descriptions-item v-if="Array.isArray(value)" :label="key" :span="2">
+                  <div class="nested-table-container">
+                    <h4>{{ key }}</h4>
+                    <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
+                      Excel</el-button>
+                    <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
+                      CSV</el-button>
+                    <el-table :data="convertArrayToTableData(value)" style="width: 100%">
+                      <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
+                        :label="header" />
+                    </el-table>
+                  </div>
+                </el-descriptions-item>
 
-        <el-table-column v-for="field in tableFields" :key="field" :label="field" align="center">
-          <template #default="scope">
-            <template v-if="getField(scope.row, field)">
-              <el-input v-if="getField(scope.row, field)?.editable" v-model="(getField(scope.row, field) as any).value"
-                size="small" />
-              <span v-else>{{ getField(scope.row, field)?.value }}</span>
-            </template>
-          </template>
-        </el-table-column>
-      </el-table>
+                <!-- If the value is an object, display as nested descriptions -->
+                <el-descriptions-item v-else-if="typeof value === 'object' && value !== null" :label="key" :span="2">
+                  <el-descriptions :column="1" border size="small">
+                    <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
+                      {{ nestedValue }}
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </el-descriptions-item>
+
+                <!-- If the value is a primitive, just display it -->
+                <el-descriptions-item v-else :label="key">
+                  {{ value }}
+                </el-descriptions-item>
+              </template>
+            </el-descriptions>
+          </div>
+
+          <!-- Array data shown as Table -->
+          <div v-else-if="tab.type === 'array'" class="tab-content-array">
+            <div class="table-actions">
+              <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
+                Excel</el-button>
+              <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
+                CSV</el-button>
+            </div>
+            <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
+              <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
+                :label="header" />
+            </el-table>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+
       <div class="comment-container">
         <div class="comment-title">Value Adjustment Query</div>
         <el-input v-model="commentAdJustField"></el-input>
@@ -115,6 +151,8 @@ import type {
   TableData,
   TableField,
   ApiResponse,
+  JsonTab,
+  NestedTableData
 } from "../types";
 
 // Define file categories
@@ -159,8 +197,6 @@ const selectedCategory = ref("");
 const uploadedFiles = ref<UploadedFile[]>([]);
 const anyTypeFiles = ref<UploadUserFile[]>([]);
 const fileUploadRefs = ref<any[]>([]);
-const tableData = ref<TableData[]>([]);
-const tableFields = ref<string[]>([]);
 const previewDialogVisible = ref(false);
 const currentPreviewUrl = ref("");
 const currentPreviewType = ref("");
@@ -169,9 +205,11 @@ const notificationVisible = ref(false);
 const notificationTitle = ref("");
 const notificationMessage = ref("");
 const notificationType = ref<"success" | "warning" | "info" | "error">("info");
-const commentAdJustField = ref("")
-// table ref
-const multipleTableRef = ref<TableInstance>()
+const commentAdJustField = ref("");
+
+// New refs for dynamic JSON data
+const jsonTabs = ref<JsonTab[]>([]);
+const activeTab = ref("0");
 
 // Computed properties
 const hasUploadedFiles = computed(() => {
@@ -203,8 +241,7 @@ function setFileUploadRef(el: any) {
 }
 
 function handleCategoryChange() {
-  tableData.value = [];
-  tableFields.value = [];
+  jsonTabs.value = [];
 }
 
 function getRequiredFiles(): FileType[] {
@@ -218,9 +255,6 @@ function getUploadedFile(fileTypeId: string): UploadedFile | undefined {
   );
 }
 
-function getField(row: TableData, fieldName: string): TableField | undefined {
-  return row.fields.find((field) => field.fieldName === fieldName);
-}
 
 function handleFileChange(file: UploadUserFile, fileTypeId: string) {
   if (file.raw) {
@@ -353,231 +387,182 @@ function downloadFile() {
   }
 }
 
-// Mock API calls
+// Mock API calls with the new JSON structure
 function mockGenerateAPI(): Promise<ApiResponse> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // Define fields based on category
-      let fields: string[];
-
-      if (selectedCategory.value === "New Letting (Office)") {
-        fields = ["Amount", "Date", "Currency", "Vendor", "Tax", "Total"];
-      } else if (selectedCategory.value === "hr") {
-        fields = [
-          "Employee ID",
-          "Department",
-          "Position",
-          "Start Date",
-          "Salary",
-          "Status",
-        ];
-      } else if (selectedCategory.value === "marketing") {
-        fields = [
-          "Campaign ID",
-          "Target Audience",
-          "Budget",
-          "Start Date",
-          "End Date",
-          "Channel",
-        ];
-      } else {
-        // No type or default
-        fields = ["Field 1", "Field 2", "Field 3", "Notes"];
-      }
-
-      tableFields.value = fields;
-
-      const data: TableData[] = [];
-
-      if (selectedCategory.value === "no-type") {
-        // For free upload type
-        anyTypeFiles.value.forEach((file, index) => {
-          const rowFields: TableField[] = fields.map((field) => ({
-            fieldName: field,
-            value: getDefaultValueForField(field),
-            editable: true,
-          }));
-
-          data.push({
-            id: `any-${index}`,
-            category: "User Defined",
-            fileName: file.name,
-            fields: rowFields,
-          });
-        });
-      } else {
-        // For specific category uploads
-        uploadedFiles.value
-          .filter((file) => file.categoryId === selectedCategory.value)
-          .forEach((uploadedFile, index) => {
-            const rowFields: TableField[] = fields.map((field) => ({
-              fieldName: field,
-              value: getDefaultValueForField(field),
-              // editable: Math.random() > 0.3, // 70% of fields are editable  
-              editable: true
-            }));
-
-            data.push({
-              id: `cat-${index}`,
-              category:
-                fileCategories.value.find((c) => c.value === selectedCategory.value)
-                  ?.label || "",
-              fileName: uploadedFile.file.name,
-              fields: rowFields,
-            });
-          });
-      }
+      // Use the sample JSON data from test.json
+      const sampleJsonData = {
+        "Tenant Basic": {
+          "Line 1": "hahhahaha",
+          "Line 2": "wjeqjjljlkc",
+          "Line 3": "111",
+          "address 1": "123123",
+          "address 2": "13123",
+          "address 3": "123sxsda",
+          "contact person": [
+            {
+              "name": "1111",
+              "phone": "1231123123",
+              "email": "123123"
+            }
+          ]
+        },
+        "Tenancy Particular": {
+          "Different Line1": "qweqwe",
+          "Different Line2": "qweqwe",
+          "Different Line3": "qweqwe",
+          "Different Line4": "qweqwe",
+          "Lese Units": [
+            {
+              "Unit": "3911",
+              "Move in": "12313123"
+            },
+            {
+              "Unit": "3911",
+              "Move in": "12313123"
+            },
+            {
+              "Unit": "3911",
+              "Move in": "12313123"
+            }
+          ]
+        },
+        "Recurring Billing": [
+          {
+            "Building Name": "Jardines",
+            "Remark": "Test",
+            "Period": "May 12"
+          },
+          {
+            "Building Name": "Jardines",
+            "Remark": "Test",
+            "Period": "May 12"
+          },
+          {
+            "Building Name": "Jardines",
+            "Remark": "Test",
+            "Period": "May 12"
+          }
+        ]
+      };
 
       resolve({
         success: true,
-        data,
-        fields,
+        jsonData: sampleJsonData
       });
     }, 1000);
   });
 }
 
-function getDefaultValueForField(fieldName: string): string | number {
-  // Generate realistic default values based on field name
-  if (
-    fieldName.toLowerCase().includes("amount") ||
-    fieldName.toLowerCase().includes("budget") ||
-    fieldName.toLowerCase().includes("salary") ||
-    fieldName.toLowerCase().includes("tax") ||
-    fieldName.toLowerCase().includes("total")
-  ) {
-    return Math.floor(Math.random() * 10000) / 100;
+// Functions to handle dynamic JSON data
+function processJsonData(jsonData: Record<string, any>) {
+  // Clear existing tabs
+  jsonTabs.value = [];
+
+  // Process each section of the JSON
+  for (const key in jsonData) {
+    if (Object.prototype.hasOwnProperty.call(jsonData, key)) {
+      const data = jsonData[key];
+      const isArray = Array.isArray(data);
+
+      jsonTabs.value.push({
+        name: key,
+        type: isArray ? 'array' : 'object',
+        data: data
+      });
+    }
   }
 
-  if (fieldName.toLowerCase().includes("date")) {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 365));
-    return date.toISOString().split("T")[0];
+  // Set active tab to the first one if available
+  if (jsonTabs.value.length > 0) {
+    activeTab.value = "0";
   }
-
-  if (fieldName.toLowerCase().includes("id")) {
-    return `ID-${Math.floor(Math.random() * 10000)}`;
-  }
-
-  if (fieldName.toLowerCase().includes("status")) {
-    const statuses = ["Active", "Pending", "Completed", "On Hold"];
-    return statuses[Math.floor(Math.random() * statuses.length)];
-  }
-
-  if (fieldName.toLowerCase().includes("currency")) {
-    const currencies = ["USD", "EUR", "GBP", "JPY", "CNY"];
-    return currencies[Math.floor(Math.random() * currencies.length)];
-  }
-
-  // Default for other fields
-  return fieldName.includes("Field") ? "" : "Click to edit";
 }
 
-function mockSubmitAPI(data: TableData[]): Promise<ApiResponse> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        message: "Data successfully processed!",
-      });
-    }, 1000);
+// Function to get headers for a nested table
+function getNestedTableHeaders(dataArray: any[]): string[] {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return [];
+  }
+
+  // Get all unique keys from all objects in the array
+  const headers = new Set<string>();
+
+  dataArray.forEach(item => {
+    if (typeof item === 'object' && item !== null) {
+      Object.keys(item).forEach(key => headers.add(key));
+    }
   });
+
+  return Array.from(headers);
+}
+
+// Function to convert array of objects to table data format for el-table
+function convertArrayToTableData(dataArray: any[]): any[] {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return [];
+  }
+
+  return dataArray.map(item => {
+    // If item is not an object, convert it to an object with a 'value' property
+    if (typeof item !== 'object' || item === null) {
+      return { value: item };
+    }
+    return { ...item };
+  });
+}
+
+// Export nested table as Excel/CSV
+function exportNestedTable(dataArray: any[], tableName: string|number, type: 'Excel' | 'CSV' = 'Excel') {
+  const headers = getNestedTableHeaders(dataArray);
+  const worksheet = XLSX.utils.json_to_sheet(dataArray);
+
+  if (type === 'CSV') {
+    const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
+    const data = new Blob([csvOutput], { type: "text/csv;charset=utf-8" });
+    FileSaver.saveAs(data, `${tableName}-${new Date().getTime()}.csv`);
+  } else {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${tableName}`);
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    FileSaver.saveAs(data, `${tableName}-${new Date().getTime()}.xlsx`);
+  }
 }
 
 async function generateValue() {
   try {
     const response = await mockGenerateAPI();
-    if (response.success && response.data) {
-      tableData.value = response.data;
-      showNotification("Success", "success", "Table data generated successfully");
+    if (response.success) {
+      if (response.jsonData) {
+        // Process the JSON data for the new UI
+        processJsonData(response.jsonData);
+        showNotification("Success", "success", "Data generated successfully");
+      } else if (response.data) {
+        // Backward compatibility with the old UI
+        showNotification("Success", "success", "Table data generated successfully");
+      }
     }
   } catch (error) {
     console.error("Error generating values:", error);
-    showNotification("Error", "error", "Failed to generate table data");
+    showNotification("Error", "error", "Failed to generate data");
   }
 }
 
 async function submitData() {
-  if (multipleTableRef.value) {
-    console.log(multipleTableRef.value.getSelectionRows());
-  }
   try {
-    // Check if all editable fields have values
-    let hasEmptyEditableFields = false;
-    tableData.value.forEach((row) => {
-      row.fields.forEach((field) => {
-        if (
-          field.editable &&
-          (field.value === "" || field.value === null || field.value === undefined)
-        ) {
-          hasEmptyEditableFields = true;
-        }
-      });
-    });
-
-    if (hasEmptyEditableFields) {
-      ElMessageBox.alert(
-        "Please fill in all editable fields before submitting.",
-        "Validation Error",
-        { type: "warning" }
-      );
-      return;
-    }
-
-    const response = await mockSubmitAPI(tableData.value);
-    if (response.success) {
-      showNotification(
-        "Success",
-        "success",
-        response.message || "The table data is updated"
-      );
-      generateValue()
-      // Reset form after successful submission
-      // resetForm();
-    }
+    // For now, just regenerate the data with the query
+    showNotification("Query Submitted", "success", "Processing your adjustment query");
+    // Wait a moment to simulate processing
+    setTimeout(() => {
+      generateValue();
+    }, 1500);
   } catch (error) {
     console.error("Error submitting data:", error);
     showNotification("Error", "error", "Failed to submit data");
-  }
-}
-
-// function resetForm() {
-//   selectedCategory.value = "";
-//   uploadedFiles.value = [];
-//   anyTypeFiles.value = [];
-//   tableData.value = [];
-//   tableFields.value = [];
-//   fileUploadRefs.value = [];
-// }
-
-function exportToCSVOrExcel(type: 'CSV' | 'Excel') {
-  // Convert tableData to a format suitable for export
-  const exportData = tableData.value.map((row) => {
-    const exportRow: Record<string, any> = {
-      Category: row.category,
-      FileName: row.fileName,
-    };
-
-    row.fields.forEach((field) => {
-      exportRow[field.fieldName] = field.value;
-    });
-
-    return exportRow;
-  });
-  const worksheet = XLSX.utils.json_to_sheet(exportData);
-  if (type === 'CSV') {
-    const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
-    const data = new Blob([csvOutput], { type: "text/csv;charset=utf-8" });
-    FileSaver.saveAs(data, `exported-data-${new Date().getTime()}.csv`);
-  }
-  if (type === 'Excel') {
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    FileSaver.saveAs(data, `exported-data-${new Date().getTime()}.xlsx`);
   }
 }
 
@@ -713,14 +698,70 @@ function showNotification(
 
 .comment-container {
   text-align: left;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e6e6e6;
 
   .comment-title {
     margin: 15px 0 15px 0;
+    font-weight: bold;
+    color: #606266;
   }
 
   .comment-submit {
     margin: 15px 0 15px 0;
     float: right;
+  }
+}
+
+/* New styles for tabs and dynamic content */
+.tab-content-object,
+.tab-content-array {
+  padding: 15px;
+
+  h4 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #606266;
+    font-weight: bold;
+  }
+}
+
+.nested-table-container {
+  margin-top: 10px;
+  margin-bottom: 15px;
+
+  h4 {
+    display: inline-block;
+    margin-right: 15px;
+  }
+
+  .el-button {
+    margin-bottom: 10px;
+  }
+}
+
+:deep(.el-descriptions) {
+  margin-bottom: 20px;
+
+  .el-descriptions__title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #303133;
+  }
+
+  .el-descriptions__label {
+    font-weight: bold;
+  }
+}
+
+.table-actions {
+  margin-bottom: 15px;
+
+  .el-button {
+    margin-right: 10px;
   }
 }
 </style>
