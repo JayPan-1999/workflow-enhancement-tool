@@ -61,51 +61,53 @@
 
           <!-- Object data shown as Description list -->
           <div v-if="tab.type === 'object'" class="tab-content-object">
+            <!-- Display primitive fields as descriptions -->
             <el-descriptions :title="tab.name" :column="2" border>
               <template v-for="(value, key) in tab.data" :key="key">
-                <!-- If the value is an array, display as a table -->
-                <el-descriptions-item v-if="Array.isArray(value)" :label="key" :span="2">
-                  <div class="nested-table-container">
-                    <h4>{{ key }}</h4>
-                    <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
-                      Excel</el-button>
-                    <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
-                      CSV</el-button>
-                    <el-table :data="convertArrayToTableData(value)" style="width: 100%">
-                      <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
-                        :label="header" />
-                    </el-table>
-                  </div>
-                </el-descriptions-item>
-
-                <!-- If the value is an object, display as nested descriptions -->
-                <el-descriptions-item v-else-if="typeof value === 'object' && value !== null" :label="key" :span="2">
-                  <el-descriptions :column="1" border size="small">
-                    <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
-                      {{ nestedValue }}
-                    </el-descriptions-item>
-                  </el-descriptions>
-                </el-descriptions-item>
-
-                <!-- If the value is a primitive, just display it -->
-                <el-descriptions-item v-else :label="key">
+                <!-- Only display primitive values in descriptions -->
+                <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
                   {{ value }}
                 </el-descriptions-item>
               </template>
             </el-descriptions>
+
+            <!-- Display array data as separate tables -->
+            <div v-for="(value, key) in tab.data" :key="`table-${key}`">
+              <div v-if="Array.isArray(value)" class="nested-table-container">
+                <h4>{{ key }}</h4>
+                <div class="table-actions">
+                  <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as Excel</el-button>
+                  <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as CSV</el-button>
+                </div>
+                <el-table :data="convertArrayToTableData(value)" style="width: 100%">
+                  <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
+                    :label="header" header-class-name="custom-table-header" />
+                </el-table>
+              </div>
+            </div>
+
+            <!-- Display nested objects as separate descriptions -->
+            <div v-for="(value, key) in tab.data" :key="`obj-${key}`">
+              <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null" class="nested-object-container">
+                <h4>{{ key }}</h4>
+                <el-descriptions :column="1" border size="small">
+                  <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
+                    {{ nestedValue }}
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+            </div>
           </div>
 
           <!-- Array data shown as Table -->
           <div v-else-if="tab.type === 'array'" class="tab-content-array">
             <div class="table-actions">
-              <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
-                Excel</el-button>
-              <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
-                CSV</el-button>
+              <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as Excel</el-button>
+              <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as CSV</el-button>
             </div>
             <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
               <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
-                :label="header" />
+                :label="header" header-class-name="custom-table-header" />
             </el-table>
           </div>
         </el-tab-pane>
@@ -411,6 +413,20 @@ function mockGenerateAPI(): Promise<ApiResponse> {
         "Tenancy Particular": {
           "Different Line1": "qweqwe",
           "Different Line2": "qweqwe",
+                    "Lese Units11": [
+            {
+              "Unit": "3911",
+              "Move in": "12313123"
+            },
+            {
+              "Unit": "3911",
+              "Move in": "12313123"
+            },
+            {
+              "Unit": "3911",
+              "Move in": "12313123"
+            }
+          ],
           "Different Line3": "qweqwe",
           "Different Line4": "qweqwe",
           "Different Line5": "qweqwe11",
@@ -580,6 +596,9 @@ function showNotification(
 </script>
 
 <style lang="less" scoped>
+.el-table :deep th{
+  background-color: #f5f7fa !important;
+}
 .file-uploader-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -723,46 +742,66 @@ function showNotification(
   padding: 15px;
 
   h4 {
-    margin-top: 10px;
+    margin-top: 20px;
     margin-bottom: 10px;
     color: #606266;
     font-weight: bold;
+    font-size: 16px;
   }
 }
 
-.nested-table-container {
-  margin-top: 10px;
-  margin-bottom: 15px;
-
+.nested-table-container, 
+.nested-object-container {
+  margin-top: 20px;
+  margin-bottom: 25px;
+  padding: 15px;
+  border: 1px solid #EBEEF5;
+  border-radius: 4px;
+  background-color: #FFF;
+  
   h4 {
     display: inline-block;
     margin-right: 15px;
-  }
-
-  .el-button {
-    margin-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #303133;
+    font-size: 16px;
+    font-weight: bold;
   }
 }
 
 :deep(.el-descriptions) {
   margin-bottom: 20px;
-
+  
   .el-descriptions__title {
     font-size: 18px;
     font-weight: bold;
     color: #303133;
   }
-
+  
   .el-descriptions__label {
     font-weight: bold;
+    color: #606266;
   }
 }
 
 .table-actions {
   margin-bottom: 15px;
-
+  
   .el-button {
     margin-right: 10px;
   }
+}
+
+:deep(.custom-table-header) {
+  background-color: #f5f7fa;
+  color: #606266;
+  font-weight: bold;
+}
+
+:deep(.el-table) {
+  margin-bottom: 15px;
+  border-radius: 4px;
+  overflow: hidden;
 }
 </style>
