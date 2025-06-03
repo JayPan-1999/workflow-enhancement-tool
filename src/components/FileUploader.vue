@@ -56,7 +56,7 @@
 
     <!-- New Dynamic JSON Result Section -->
     <div v-if="jsonTabs.length > 0" class="results-section mt-xl">
-      <el-tabs v-model="activeTab" type="card">
+      <el-tabs v-model="activeTab" type="border-card">
         <el-tab-pane v-for="(tab, index) in jsonTabs" :key="tab.name" :label="tab.name" :name="String(index)">
 
           <!-- Object data shown as Description list -->
@@ -76,8 +76,10 @@
               <div v-if="Array.isArray(value)" class="nested-table-container">
                 <h4>{{ key }}</h4>
                 <div class="table-actions">
-                  <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as Excel</el-button>
-                  <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as CSV</el-button>
+                  <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
+                    Excel</el-button>
+                  <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
+                    CSV</el-button>
                 </div>
                 <el-table :data="convertArrayToTableData(value)" style="width: 100%">
                   <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
@@ -88,7 +90,8 @@
 
             <!-- Display nested objects as separate descriptions -->
             <div v-for="(value, key) in tab.data" :key="`obj-${key}`">
-              <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null" class="nested-object-container">
+              <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null"
+                class="nested-object-container">
                 <h4>{{ key }}</h4>
                 <el-descriptions :column="1" border size="small">
                   <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
@@ -102,8 +105,10 @@
           <!-- Array data shown as Table -->
           <div v-else-if="tab.type === 'array'" class="tab-content-array">
             <div class="table-actions">
-              <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as Excel</el-button>
-              <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as CSV</el-button>
+              <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
+                Excel</el-button>
+              <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
+                CSV</el-button>
             </div>
             <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
               <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
@@ -142,19 +147,16 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import type { TableInstance, UploadUserFile } from "element-plus";
+import { ElMessage } from "element-plus";
+import type { UploadUserFile } from "element-plus";
 import * as XLSX from "xlsx";
 import FileSaver from "file-saver";
 import type {
   FileCategory,
   FileType,
   UploadedFile,
-  TableData,
-  TableField,
   ApiResponse,
   JsonTab,
-  NestedTableData
 } from "../types";
 
 // Define file categories
@@ -396,70 +398,145 @@ function mockGenerateAPI(): Promise<ApiResponse> {
       // Use the sample JSON data from test.json
       const sampleJsonData = {
         "Tenant Basic": {
-          "Line 1": "hahhahaha",
-          "Line 2": "wjeqjjljlkc",
-          "Line 3": "111",
-          "address 1": "123123",
-          "address 2": "13123",
-          "address 3": "123sxsda",
-          "contact person": [
+          "Name Line 1": "NEXT GENERATION MARINE ENGINEERING",
+          "Name Line 2": "LIMITED",
+          "Nationality": "Chinese",
+          "Debit Note E-mail": "louisa@ewpartners.fund;lyn@ewpartners.fund",
+          "Debit Note Print Flag": "E - Email Only",
+          "Effective Date": "27 Dec 2024",
+          "Mailing Name (Line 1)": "NEXT GENERATION MARINE ENGINEERING",
+          "Mailing Name (Line 2)": "LIMITED",
+          "Address 1": "Room 1903, 19/F",
+          "Address 2": "Lee Garden One",
+          "Address 3": "33 Hysan Avenue",
+          "Address 4": "Causeway Bay, Hong Kong",
+          "Phone No.": "+86 13811612788",
+          "Alt Phone No.": "+86 13521201755",
+          "Contact Person": [
             {
-              "name": "1111",
-              "phone": "1231123123",
-              "email": "123123"
+              "Name (Line 1)": "Liv Chi",
+              "Title (Line 1)": "Senior VP of HR and Admin",
+              "Phone No.": "+86 13811612788",
+              "Alt Phone No.": "+86 13521201755",
+              "Email": "liv@ewpartners.fund",
+              "Type": "Leasing"
+            },
+            {
+              "Name (Line 1)": "Lyn Guan",
+              "Title (Line 1)": "Senior Associate (Finance Department)",
+              "Phone No.": "+86 13521201755",
+              "Alt Phone No.": "+86 13811612788",
+              "Email": "lyn@ewpartners.fund",
+              "Type": "Billing"
             }
           ]
         },
         "Tenancy Particular": {
-          "Different Line1": "qweqwe",
-          "Different Line2": "qweqwe",
-                    "Lese Units11": [
+          "Tenant": "NEXT GENERATION MARINE ENGINEERING LIMITED",
+          "LMS Trading Name": "Next Generation Marine Engineering Limited",
+          "Building": "JARDINE HOUSE",
+          "Premises": "Suite 3911",
+          "Term": "36 months",
+          "LMS Business Nature": "Asset / Investment Management",
+          "Lease Start": "01 Mar 2025",
+          "Lease End": "29 Feb 2028",
+          "R/F Period": "3 months",
+          "R/F Remarks": "01/03/2025-31/03/2025 & 01/01/2028-29/02/2028",
+          "R/R Date (1st)": "",
+          "R/R Date (2st)": "",
+          "R/R Date (3st)": "",
+          "R/R Date (4st)": "",
+          "R/R Date (5st)": "",
+          "R/R Date (6st)": "",
+          "R/R Remark": "",
+          "Surrender Date": "",
+          "License": "",
+          "Lease Type": "Office",
+          "Local Currency": "True",
+          "DSP Notice": "",
+          "Prepare Auto Pay Form": "True",
+          "Remark": "Stls.6.1.006F.Off.08 doc 01.05.2022",
+          "Lease Units": [
             {
               "Unit": "3911",
-              "Move in": "12313123"
-            },
-            {
-              "Unit": "3911",
-              "Move in": "12313123"
-            },
-            {
-              "Unit": "3911",
-              "Move in": "12313123"
-            }
-          ],
-          "Different Line3": "qweqwe",
-          "Different Line4": "qweqwe",
-          "Different Line5": "qweqwe11",
-          "Lese Units": [
-            {
-              "Unit": "3911",
-              "Move in": "12313123"
-            },
-            {
-              "Unit": "3911",
-              "Move in": "12313123"
-            },
-            {
-              "Unit": "3911",
-              "Move in": "12313123"
+              "Move In": "01 Mar 2025",
+              "Move Out": "29 Feb 2028",
+              "Lettable Area": "1,114",
+              "Rateable Value": "1,404,000",
+              "JDE Business Nature": "Asset / Investment Management",
+              "JDE Tradename": "Next Generation Marine Engineering Limited"
             }
           ]
         },
         "Recurring Billing": [
           {
-            "Building Name": "Jardines",
-            "Remark": "Test",
-            "Period": "May 12"
+            "Unit": "3911",
+            "Start Date": "01 Mar 2025",
+            "End Date": "31 Mar 2025",
+            "Rent (psf)": "Free",
+            "MC (psf)": "15.50psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "Rent Free Period, MC from MC PC SUMMARY Year 2025 (Jan - June)"
           },
           {
-            "Building Name": "Jardines",
-            "Remark": "Test",
-            "Period": "May 12"
+            "Unit": "3911",
+            "Start Date": "01 Apr 2025",
+            "End Date": "30 Jun 2025",
+            "Rent (psf)": "120.00psf",
+            "MC (psf)": "15.50psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "MC from MC PC SUMMARY Year 2025 (Jan - June)"
           },
           {
-            "Building Name": "Jardines",
-            "Remark": "Test",
-            "Period": "May 12"
+            "Unit": "3911",
+            "Start Date": "01 Jul 2025",
+            "End Date": "31 Dec 2027",
+            "Rent (psf)": "120.00psf",
+            "MC (psf)": "15.90psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "MC from MC PC SUMMARY Year 2025 (July - Dec)"
+          },
+          {
+            "Unit": "3911",
+            "Start Date": "01 Jan 2028",
+            "End Date": "29 Feb 2028",
+            "Rent (psf)": "Free",
+            "MC (psf)": "15.90psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "Rent Free Period, MC from MC PC SUMMARY Year 2025 (July - Dec)"
+          }
+        ],
+        "Turnover Rent": {},
+        "Security Deposit": {
+          "Cash Deposit": "HKD 628,747.60",
+          "No of Months": "4.00",
+          "Type of Guarantee": "Personal guarantee (Fung Kwok Chor, Alfred)",
+          "Reamrks": "4 months cash deposit"
+        },
+        "Lease Incentives": [
+          {
+            "Building Name": "JARDINE HOUSE",
+            "Display Unit Description": "Suite 3911",
+            "Rent Free Period": "01 Mar 2025 - 31 Mar 2025",
+            "Monthly Amount": "$133,680.00",
+            "Total Amount": "$133,680.00",
+            "Amortization Period": "01 Mar 2025 - 29 Feb 2028",
+            "Remark": "1 month rent free",
+            "Last Updated": "30 Apr 2025"
+          },
+          {
+            "Building Name": "JARDINE HOUSE",
+            "Display Unit Description": "Suite 3911",
+            "Rent Free Period": "01 Jan 2028 - 29 Feb 2028",
+            "Monthly Amount": "$133,680.00",
+            "Total Amount": "$267,360.00",
+            "Amortization Period": "01 Mar 2025 - 29 Feb 2028",
+            "Remark": "2 months rent free",
+            "Last Updated": "30 Apr 2025"
           }
         ]
       };
@@ -531,8 +608,8 @@ function convertArrayToTableData(dataArray: any[]): any[] {
 }
 
 // Export nested table as Excel/CSV
-function exportNestedTable(dataArray: any[], tableName: string|number, type: 'Excel' | 'CSV' = 'Excel') {
-  const headers = getNestedTableHeaders(dataArray);
+function exportNestedTable(dataArray: any[], tableName: string | number, type: 'Excel' | 'CSV' = 'Excel') {
+  // const headers = getNestedTableHeaders(dataArray);
   const worksheet = XLSX.utils.json_to_sheet(dataArray);
 
   if (type === 'CSV') {
@@ -596,9 +673,19 @@ function showNotification(
 </script>
 
 <style lang="less" scoped>
-.el-table :deep th{
+.el-table :deep th {
   background-color: #f5f7fa !important;
 }
+
+:deep .el-upload-list__item-name {
+  display: flex;
+  justify-content: center;
+}
+
+:deep .el-descriptions__body {
+  box-shadow: @box-shadow-light;
+}
+
 .file-uploader-container {
   max-width: 1000px;
   margin: 0 auto;
@@ -626,7 +713,6 @@ function showNotification(
 .file-upload-item {
   margin-bottom: @spacing-lg;
   padding: @spacing-md;
-  background-color: @background-light;
   border-radius: @border-radius;
   border: 1px solid @border-color-light;
   transition: all @transition-duration;
@@ -645,6 +731,8 @@ function showNotification(
   gap: @spacing-sm;
   font-size: @font-size-large;
   color: @text-color;
+  display: flex;
+  justify-content: center;
 }
 
 .uploaded-file {
@@ -653,6 +741,7 @@ function showNotification(
   align-items: center;
   gap: @spacing-sm;
   color: @text-color-secondary;
+  justify-content: center;
 }
 
 .any-type-files-list {
@@ -750,17 +839,15 @@ function showNotification(
   }
 }
 
-.nested-table-container, 
+.nested-table-container,
 .nested-object-container {
   margin-top: 20px;
   margin-bottom: 25px;
-  padding: 15px;
-  border: 1px solid #EBEEF5;
   border-radius: 4px;
   background-color: #FFF;
-  
+
   h4 {
-    display: inline-block;
+    display: flex;
     margin-right: 15px;
     margin-top: 0;
     margin-bottom: 15px;
@@ -772,13 +859,13 @@ function showNotification(
 
 :deep(.el-descriptions) {
   margin-bottom: 20px;
-  
+
   .el-descriptions__title {
     font-size: 18px;
     font-weight: bold;
     color: #303133;
   }
-  
+
   .el-descriptions__label {
     font-weight: bold;
     color: #606266;
@@ -787,7 +874,7 @@ function showNotification(
 
 .table-actions {
   margin-bottom: 15px;
-  
+
   .el-button {
     margin-right: 10px;
   }
