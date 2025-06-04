@@ -38,7 +38,7 @@
             <el-tag v-if="fileType.required" type="danger" size="small">Required</el-tag>
           </div>
           <el-upload :ref="setFileUploadRef" action="#" :auto-upload="false" :limit="1" :accept="fileType.fileType"
-            :on-change="(file: any) => handleFileChange(file, fileType.name)"
+            :on-change="(file: any) => handleFileChange(file, fileType)"
             :on-remove="() => handleFileRemove(fileType.name)">
             <el-button type="primary">Upload {{ fileType.name }}</el-button>
           </el-upload>
@@ -158,6 +158,7 @@ import type {
   ApiResponse,
   JsonTab,
 } from "../types";
+import axios from "axios";
 
 // Define file categories
 const fileCategories = ref<FileCategory[]>([
@@ -165,11 +166,11 @@ const fileCategories = ref<FileCategory[]>([
     label: "New Letting (Office)",
     value: "New Letting (Office)",
     files: [
-      { name: "Signed Lease", required: true, fileType: ".pdf" },
-      { name: "Side Letter", required: false, fileType: ".pdf" },
-      { name: "MC PC Summary", required: true, fileType: ".xlsx,.xls" },
-      { name: "Deposit Fact Sheet", required: true, fileType: ".pdf" },
-      { name: "Contact Info E-mail", required: false, fileType: ".xlsx" },
+      { name: "Signed Lease", required: true, fileType: ".pdf", backendField: "signed_lease" },
+      { name: "Side Letter", required: false, fileType: ".pdf", backendField: "signed_side_letter" },
+      { name: "MC PC Summary", required: true, fileType: ".xlsx,.xls", backendField: "mc_pc_summary" },
+      { name: "Deposit Fact Sheet", required: true, fileType: ".pdf", backendField: "deposit_fact_sheet" },
+      { name: "Contact Info E-mail", required: false, fileType: ".xlsx", backendField: "lms_tenant_email" },
     ],
   },
   // {
@@ -244,6 +245,11 @@ function setFileUploadRef(el: any) {
   }
 }
 
+function requestGenerateValue() {
+  console.log(fileUploadRefs.value);
+  console.log(uploadedFiles.value);
+}
+
 function handleCategoryChange() {
   jsonTabs.value = [];
 }
@@ -260,10 +266,12 @@ function getUploadedFile(fileTypeId: string): UploadedFile | undefined {
 }
 
 
-function handleFileChange(file: UploadUserFile, fileTypeId: string) {
+function handleFileChange(file: UploadUserFile, fileType: FileType) {
   if (file.raw) {
+    const { backendField, name: fileTypeId } = fileType
+
     const existingIndex = uploadedFiles.value.findIndex(
-      (f) => f.categoryId === selectedCategory.value && f.fileTypeId === fileTypeId
+      (f) => f.categoryId === selectedCategory.value && f.fileTypeId === fileType.name
     );
 
     const previewUrl = createObjectURL(file.raw);
@@ -274,6 +282,7 @@ function handleFileChange(file: UploadUserFile, fileTypeId: string) {
         fileTypeId,
         file: file.raw,
         previewUrl,
+        backendField,
       };
     } else {
       uploadedFiles.value.push({
@@ -281,6 +290,7 @@ function handleFileChange(file: UploadUserFile, fileTypeId: string) {
         fileTypeId,
         file: file.raw,
         previewUrl,
+        backendField,
       });
     }
   }
@@ -647,17 +657,34 @@ async function generateValue() {
 }
 
 async function submitData() {
-  try {
-    // For now, just regenerate the data with the query
-    showNotification("Query Submitted", "success", "Processing your adjustment query");
-    // Wait a moment to simulate processing
-    setTimeout(() => {
-      generateValue();
-    }, 1500);
-  } catch (error) {
-    console.error("Error submitting data:", error);
-    showNotification("Error", "error", "Failed to submit data");
-  }
+  // console.log(uploadedFiles.value);
+  // try {
+  //   // For now, just regenerate the data with the query
+  //   showNotification("Query Submitted", "success", "Processing your adjustment query");
+  //   // Wait a moment to simulate processing
+  //   setTimeout(() => {
+  //     generateValue();
+  //   }, 1500);
+  // } catch (error) {
+  //   console.error("Error submitting data:", error);
+  //   showNotification("Error", "error", "Failed to submit data");
+  // }
+  const formData = new FormData();
+  uploadedFiles.value.forEach((_file) => {
+    if (_file.categoryId === selectedCategory.value) {
+      formData.append(_file.backendField, _file.file);
+    }
+  })
+  axios.post('https://poc-jsc-contract-api-hrbtg6fnc0dabhc5.eastus-01.azurewebsites.net/api/process-contract', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: 'Bearer ' + 'd_and_b_jsc_contract_key'
+    }
+  }).then((res) => {
+    console.log(res);
+  }).catch((err) => {
+    console.log(err);
+  })
 }
 
 function showNotification(

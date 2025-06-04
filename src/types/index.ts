@@ -2,6 +2,7 @@ export interface FileType {
     name: string;
     required: boolean;
     fileType: string;
+    backendField: string;
 }
 
 export interface FileCategory {
@@ -15,6 +16,7 @@ export interface UploadedFile {
     fileTypeId: string;
     file: File;
     previewUrl?: string;
+    backendField: string;
 }
 
 export interface TableField {
