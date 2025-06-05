@@ -11,6 +11,11 @@ export interface FileCategory {
     files: FileType[];
 }
 
+export interface TenantType {
+    label: string;
+    value: string;
+}
+
 export interface UploadedFile {
     categoryId: string;
     fileTypeId: string;

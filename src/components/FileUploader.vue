@@ -1,148 +1,161 @@
 <template>
-  <div class="file-uploader-container">
-    <h2 class="text-center mb-lg">HKLand Lease Document Management</h2>
-    <el-form label-position="top">
-      <el-form-item label="Select Document Category">
-        <el-select v-model="selectedCategory" placeholder="Select category" @change="handleCategoryChange">
-          <el-option v-for="category in fileCategories" :key="category.value" :label="category.label"
-            :value="category.value" />
-        </el-select>
-      </el-form-item>
-    </el-form>
+  <div class="file-container">
+    <div class="file-uploader-container">
+      <h2 class="text-center mb-lg">HKLand Lease Document Management</h2>
+      <el-form label-position="top">
+        <el-form-item label="Select Document Category">
+          <el-select v-model="selectedCategory" placeholder="Select category" @change="handleCategoryChange">
+            <el-option v-for="category in fileCategories" :key="category.value" :label="category.label"
+              :value="category.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
 
-    <div v-if="selectedCategory" class="upload-section">
-      <h3 class="mb-md">Upload Required Files</h3>
-      <div v-if="selectedCategory === 'no-type'" class="free-upload">
-        <el-upload v-model:file-list="anyTypeFiles" multiple action="#" :limit="5" :auto-upload="false"
-          :on-change="handleAnyFileChange" :on-exceed="handleExceed" :before-upload="beforeAnyUpload">
-          <el-button type="primary">Select Files (Max 5)</el-button>
-          <template #tip>
-            <div class="el-upload__tip">You can upload up to 5 files of any type</div>
-          </template>
-        </el-upload>
-
-        <!-- Preview for no-type files -->
-        <div v-if="anyTypeFiles.length > 0" class="any-type-files-list mt-md">
-          <h4>Uploaded Files:</h4>
-          <div v-for="(file, index) in anyTypeFiles" :key="index" class="any-type-file-item">
-            <el-tag type="success">{{ file.name }}</el-tag>
-            <el-button type="text" @click="previewAnyTypeFile(file)">Preview</el-button>
-          </div>
-        </div>
-      </div>
-
-      <div v-else class="required-files">
-        <div v-for="fileType in getRequiredFiles()" :key="fileType.name" class="file-upload-item">
-          <div class="file-type-name">
-            {{ fileType.name }}
-            <el-tag v-if="fileType.required" type="danger" size="small">Required</el-tag>
-          </div>
-          <el-upload :ref="setFileUploadRef" action="#" :auto-upload="false" :limit="1" :accept="fileType.fileType"
-            :on-change="(file: any) => handleFileChange(file, fileType)"
-            :on-remove="() => handleFileRemove(fileType.name)">
-            <el-button type="primary">Upload {{ fileType.name }}</el-button>
+      <div v-if="selectedCategory" class="upload-section">
+        <h3 class="mb-md">Upload Required Files</h3>
+        <div v-if="selectedCategory === 'no-type'" class="free-upload">
+          <el-upload v-model:file-list="anyTypeFiles" multiple action="#" :limit="5" :auto-upload="false"
+            :on-change="handleAnyFileChange" :on-exceed="handleExceed" :before-upload="beforeAnyUpload">
+            <el-button type="primary">Select Files (Max 5)</el-button>
+            <template #tip>
+              <div class="el-upload__tip">You can upload up to 5 files of any type</div>
+            </template>
           </el-upload>
-          <div v-if="getUploadedFile(fileType.name)" class="uploaded-file mt-sm">
-            <el-tag type="success">Uploaded: {{ getUploadedFile(fileType.name)?.file.name }}</el-tag>
-            <el-button type="text" @click="previewFile(fileType.name)">Preview</el-button>
+
+          <!-- Preview for no-type files -->
+          <div v-if="anyTypeFiles.length > 0" class="any-type-files-list mt-md">
+            <h4>Uploaded Files:</h4>
+            <div v-for="(file, index) in anyTypeFiles" :key="index" class="any-type-file-item">
+              <el-tag type="success">{{ file.name }}</el-tag>
+              <el-button type="text" @click="previewAnyTypeFile(file)">Preview</el-button>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="required-files">
+          <div v-for="fileType in getRequiredFiles()" :key="fileType.name" class="file-upload-item">
+            <div class="file-type-name">
+              {{ fileType.name }}
+              <el-tag v-if="fileType.required" type="danger" size="small">Required</el-tag>
+            </div>
+            <el-upload :ref="setFileUploadRef" action="#" :auto-upload="false" :limit="1" :accept="fileType.fileType"
+              :on-change="(file: any) => handleFileChange(file, fileType)"
+              :on-remove="() => handleFileRemove(fileType.name)">
+              <el-button type="primary">Upload {{ fileType.name }}</el-button>
+            </el-upload>
+            <div v-if="getUploadedFile(fileType.name)" class="uploaded-file mt-sm">
+              <el-tag type="success">Uploaded: {{ getUploadedFile(fileType.name)?.file.name }}</el-tag>
+              <el-button type="text" @click="previewFile(fileType.name)">Preview</el-button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="action-buttons flex-center mt-lg" v-if="selectedCategory && hasUploadedFiles">
-      <el-button type="primary" @click="generateValue" :disabled="!canGenerate">Generate Value</el-button>
-    </div>
+      <div class="action-buttons flex-center mt-lg" v-if="selectedCategory && hasUploadedFiles">
+        <el-button type="primary" @click="generateValue" :disabled="!canGenerate">Generate Value</el-button>
+      </div>
 
-    <!-- New Dynamic JSON Result Section -->
-    <div v-if="jsonTabs.length > 0" class="results-section mt-xl">
-      <el-tabs v-model="activeTab" type="border-card">
-        <el-tab-pane v-for="(tab, index) in jsonTabs" :key="tab.name" :label="tab.name" :name="String(index)">
+      <!-- New Dynamic JSON Result Section -->
+      <div v-if="jsonTabs.length > 0" class="results-section mt-xl">
+        <el-tabs v-model="activeTab" type="border-card">
+          <el-tab-pane v-for="(tab, index) in jsonTabs" :key="tab.name" :label="tab.name" :name="String(index)">
 
-          <!-- Object data shown as Description list -->
-          <div v-if="tab.type === 'object'" class="tab-content-object">
-            <!-- Display primitive fields as descriptions -->
-            <el-descriptions :title="tab.name" :column="2" border>
-              <template v-for="(value, key) in tab.data" :key="key">
-                <!-- Only display primitive values in descriptions -->
-                <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
-                  {{ value }}
-                </el-descriptions-item>
-              </template>
-            </el-descriptions>
-
-            <!-- Display array data as separate tables -->
-            <div v-for="(value, key) in tab.data" :key="`table-${key}`">
-              <div v-if="Array.isArray(value)" class="nested-table-container">
-                <h4>{{ key }}</h4>
-                <div class="table-actions">
-                  <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
-                    Excel</el-button>
-                  <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
-                    CSV</el-button>
-                </div>
-                <el-table :data="convertArrayToTableData(value)" style="width: 100%">
-                  <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
-                    :label="header" header-class-name="custom-table-header" />
-                </el-table>
-              </div>
-            </div>
-
-            <!-- Display nested objects as separate descriptions -->
-            <div v-for="(value, key) in tab.data" :key="`obj-${key}`">
-              <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null"
-                class="nested-object-container">
-                <h4>{{ key }}</h4>
-                <el-descriptions :column="1" border size="small">
-                  <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
-                    {{ nestedValue }}
+            <!-- Object data shown as Description list -->
+            <div v-if="tab.type === 'object'" class="tab-content-object">
+              <!-- Display primitive fields as descriptions -->
+              <el-descriptions :title="tab.name" :column="2" border>
+                <template v-for="(value, key) in tab.data" :key="key">
+                  <!-- Only display primitive values in descriptions -->
+                  <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
+                    {{ value }}
                   </el-descriptions-item>
-                </el-descriptions>
+                </template>
+              </el-descriptions>
+
+              <!-- Display array data as separate tables -->
+              <div v-for="(value, key) in tab.data" :key="`table-${key}`">
+                <div v-if="Array.isArray(value)" class="nested-table-container">
+                  <h4>{{ key }}</h4>
+                  <div class="table-actions">
+                    <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
+                      Excel</el-button>
+                    <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
+                      CSV</el-button>
+                  </div>
+                  <el-table :data="convertArrayToTableData(value)" style="width: 100%">
+                    <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
+                      :label="header" header-class-name="custom-table-header" />
+                  </el-table>
+                </div>
+              </div>
+
+              <!-- Display nested objects as separate descriptions -->
+              <div v-for="(value, key) in tab.data" :key="`obj-${key}`">
+                <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null"
+                  class="nested-object-container">
+                  <h4>{{ key }}</h4>
+                  <el-descriptions :column="1" border size="small">
+                    <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
+                      {{ nestedValue }}
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Array data shown as Table -->
-          <div v-else-if="tab.type === 'array'" class="tab-content-array">
-            <div class="table-actions">
-              <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
-                Excel</el-button>
-              <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
-                CSV</el-button>
+            <!-- Array data shown as Table -->
+            <div v-else-if="tab.type === 'array'" class="tab-content-array">
+              <div class="table-actions">
+                <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
+                  Excel</el-button>
+                <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
+                  CSV</el-button>
+              </div>
+              <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
+                <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
+                  :label="header" header-class-name="custom-table-header" />
+              </el-table>
             </div>
-            <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
-              <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
-                :label="header" header-class-name="custom-table-header" />
-            </el-table>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+          </el-tab-pane>
+        </el-tabs>
 
-      <div class="comment-container">
-        <div class="comment-title">Value Adjustment Query</div>
-        <el-input v-model="commentAdJustField"></el-input>
-        <el-button class="comment-submit" type="success" @click="submitData">Submit Query</el-button>
-      </div>
-    </div>
-
-    <!-- Preview dialog -->
-    <el-dialog v-model="previewDialogVisible" title="File Preview" width="80%">
-      <div class="preview-container">
-        <iframe v-if="currentPreviewType === 'pdf'" :src="currentPreviewUrl" width="100%" height="600"></iframe>
-        <img v-else-if="currentPreviewType === 'image'" :src="currentPreviewUrl" style="max-width: 100%" />
-        <iframe v-else-if="currentPreviewType === 'powerpoint'" :src="currentPreviewUrl" width="100%"
-          height="600"></iframe>
-        <div v-else class="preview-not-available">
-          <p>Preview not available for this file type.</p>
-          <el-button type="primary" @click="downloadFile">Download File</el-button>
+        <div class="comment-container">
+          <div class="comment-title">Value Adjustment Query</div>
+          <el-input v-model="commentAdJustField"></el-input>
+          <el-button class="comment-submit" type="success" @click="submitData">Submit Query</el-button>
         </div>
       </div>
-    </el-dialog>
 
-    <!-- Notification feedback -->
-    <el-notification v-model:visible="notificationVisible" :title="notificationTitle" :type="notificationType"
-      :message="notificationMessage" :duration="3000" />
+      <!-- Preview dialog -->
+      <el-dialog v-model="previewDialogVisible" title="File Preview" width="80%">
+        <div class="preview-container">
+          <iframe v-if="currentPreviewType === 'pdf'" :src="currentPreviewUrl" width="100%" height="600"></iframe>
+          <img v-else-if="currentPreviewType === 'image'" :src="currentPreviewUrl" style="max-width: 100%" />
+          <iframe v-else-if="currentPreviewType === 'powerpoint'" :src="currentPreviewUrl" width="100%"
+            height="600"></iframe>
+          <div v-else class="preview-not-available">
+            <p>Preview not available for this file type.</p>
+            <el-button type="primary" @click="downloadFile">Download File</el-button>
+          </div>
+        </div>
+      </el-dialog>
+
+      <!-- Notification feedback -->
+      <el-notification v-model:visible="notificationVisible" :title="notificationTitle" :type="notificationType"
+        :message="notificationMessage" :duration="3000" />
+    </div>
+    <div class="tenant-type">
+      <el-form label-position="top">
+        <el-form-item label="Tenant Type">
+          <el-select v-model="selectedTenantItem" placeholder="Select tenant type">
+            <el-option v-for="tenantItem in tenantTypes" :key="tenantItem.value" :label="tenantItem.label"
+              :value="tenantItem.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -197,8 +210,20 @@ const fileCategories = ref<FileCategory[]>([
   // },
 ]);
 
+const tenantTypes = ref([
+  {
+    label: 'Retail',
+    value: 'Retail'
+  },
+  {
+    label: 'Office',
+    value: 'Office'
+  }
+])
+
 // Refs and state
 const selectedCategory = ref("");
+const selectedTenantItem = ref("");
 const uploadedFiles = ref<UploadedFile[]>([]);
 const anyTypeFiles = ref<UploadUserFile[]>([]);
 const fileUploadRefs = ref<any[]>([]);
@@ -704,6 +729,13 @@ function showNotification(
   background-color: #f5f7fa !important;
 }
 
+.tenant-type {
+  padding: 20px;
+  margin-top: 50px;
+  width: 300px;
+}
+
+
 :deep .el-upload-list__item-name {
   display: flex;
   justify-content: center;
@@ -711,6 +743,10 @@ function showNotification(
 
 :deep .el-descriptions__body {
   box-shadow: @box-shadow-light;
+}
+
+.file-container {
+  display: flex;
 }
 
 .file-uploader-container {
