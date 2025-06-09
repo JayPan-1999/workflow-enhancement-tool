@@ -1,6 +1,7 @@
 <template>
-  <div class="file-container">
-    <div class="file-uploader-container">
+  <div class="app-container">
+    <!-- Header with dropdown -->
+    <div class="header-section">
       <h2 class="text-center mb-lg">HKLand Lease Document Management</h2>
       <el-form label-position="top">
         <el-form-item label="Select Document Category">
@@ -10,168 +11,138 @@
           </el-select>
         </el-form-item>
       </el-form>
+    </div>
 
-      <div v-if="selectedCategory" class="upload-section">
-        <h3 class="mb-md">Upload Required Files</h3>
-        <div v-if="selectedCategory === 'no-type'" class="free-upload">
-          <el-upload v-model:file-list="anyTypeFiles" multiple action="#" :limit="5" :auto-upload="false"
-            :on-change="handleAnyFileChange" :on-exceed="handleExceed" :before-upload="beforeAnyUpload">
-            <el-button type="primary">Select Files (Max 5)</el-button>
-            <template #tip>
-              <div class="el-upload__tip">You can upload up to 5 files of any type</div>
-            </template>
-          </el-upload>
-
-          <!-- Preview for no-type files -->
-          <div v-if="anyTypeFiles.length > 0" class="any-type-files-list mt-md">
-            <h4>Uploaded Files:</h4>
-            <div v-for="(file, index) in anyTypeFiles" :key="index" class="any-type-file-item">
-              <el-tag type="success">{{ file.name }}</el-tag>
-              <el-button type="text" @click="previewAnyTypeFile(file)">Preview</el-button>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="required-files">
-          <div v-for="fileType in getRequiredFiles()" :key="fileType.name" class="file-upload-item">
-            <div class="file-type-name">
-              {{ fileType.name }}
-              <el-tag v-if="fileType.required" type="danger" size="small">Required</el-tag>
-            </div>
-            <el-upload :ref="setFileUploadRef" action="#" :auto-upload="false" :limit="1" :accept="fileType.fileType"
-              :on-change="(file: any) => handleFileChange(file, fileType)"
-              :on-remove="() => handleFileRemove(fileType.name)">
-              <el-button type="primary">Upload {{ fileType.name }}</el-button>
-            </el-upload>
-            <div v-if="getUploadedFile(fileType.name)" class="uploaded-file mt-sm">
-              <el-tag type="success">Uploaded: {{ getUploadedFile(fileType.name)?.file.name }}</el-tag>
-              <el-button type="text" @click="previewFile(fileType.name)">Preview</el-button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="action-buttons flex-center mt-lg" v-if="selectedCategory && hasUploadedFiles">
-        <el-button type="primary" @click="generateValue" :disabled="!canGenerate">Generate Value</el-button>
-      </div>
-
-      <!-- New Dynamic JSON Result Section -->
-      <div v-if="jsonTabs.length > 0" class="results-section mt-xl">
-        <el-tabs v-model="activeTab" type="border-card">
-          <el-tab-pane v-for="(tab, index) in jsonTabs" :key="tab.name" :label="tab.name" :name="String(index)">
-
-            <!-- Object data shown as Description list -->
-            <div v-if="tab.type === 'object'" class="tab-content-object">
-              <!-- Display primitive fields as descriptions -->
-              <el-descriptions :title="tab.name" :column="2" border>
-                <template v-for="(value, key) in tab.data" :key="key">
-                  <!-- Only display primitive values in descriptions -->
-                  <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
-                    {{ value }}
-                  </el-descriptions-item>
-                </template>
-              </el-descriptions>
-
-              <!-- Display array data as separate tables -->
-              <div v-for="(value, key) in tab.data" :key="`table-${key}`">
-                <div v-if="Array.isArray(value)" class="nested-table-container">
-                  <h4>{{ key }}</h4>
-                  <div class="table-actions">
-                    <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
-                      Excel</el-button>
-                    <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
-                      CSV</el-button>
-                  </div>
-                  <el-table :data="convertArrayToTableData(value)" style="width: 100%">
-                    <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
-                      :label="header" header-class-name="custom-table-header" />
-                  </el-table>
-                </div>
+    <!-- Split screen layout -->
+    <div class="main-content">
+      <!-- Left panel -->
+      <div class="left-panel">
+        <div v-if="selectedCategory" class="upload-section">
+          <h3 class="mb-md">Upload Required Files</h3>
+          <div class="required-files">
+            <div v-for="fileType in getRequiredFiles()" :key="fileType.name" class="file-upload-item">
+              <div class="file-type-name">
+                {{ fileType.name }}
+                <el-tag v-if="fileType.required" type="danger" size="small">Required</el-tag>
               </div>
+              <el-upload :ref="setFileUploadRef" action="#" :auto-upload="false" :limit="1" :accept="fileType.fileType"
+                :on-change="(file: any) => handleFileChange(file, fileType)"
+                :on-remove="() => handleFileRemove(fileType.name)">
+                <el-button type="primary">Upload {{ fileType.name }}</el-button>
+              </el-upload>
+              <div v-if="getUploadedFile(fileType.name)" class="uploaded-file mt-sm">
+                <el-tag type="success">Uploaded: {{ getUploadedFile(fileType.name)?.file.name }}</el-tag>
+                <el-button type="text" @click="previewFile(fileType.name)">Preview</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <!-- Display nested objects as separate descriptions -->
-              <div v-for="(value, key) in tab.data" :key="`obj-${key}`">
-                <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null"
-                  class="nested-object-container">
-                  <h4>{{ key }}</h4>
-                  <el-descriptions :column="1" border size="small">
-                    <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey" :label="nestedKey">
-                      {{ nestedValue }}
+      <!-- Right panel -->
+      <div class="right-panel">
+        <div v-if="jsonTabs.length > 0" class="results-section">
+          <el-tabs v-model="activeTab" type="border-card">
+            <el-tab-pane v-for="(tab, index) in jsonTabs" :key="tab.name" :label="tab.name" :name="String(index)">
+              <!-- Object data shown as Description list -->
+              <div v-if="tab.type === 'object'" class="tab-content-object">
+                <!-- Display primitive fields as descriptions -->
+                <el-descriptions :title="tab.name" :column="2" border>
+                  <template v-for="(value, key) in tab.data" :key="key">
+                    <!-- Only display primitive values in descriptions -->
+                    <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
+                      {{ value }}
                     </el-descriptions-item>
-                  </el-descriptions>
+                  </template>
+                </el-descriptions>
+
+                <!-- Display array data as separate tables -->
+                <div v-for="(value, key) in tab.data" :key="`table-${key}`">
+                  <div v-if="Array.isArray(value)" class="nested-table-container">
+                    <h4>{{ key }}</h4>
+                    <div class="table-actions">
+                      <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
+                        Excel</el-button>
+                      <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
+                        CSV</el-button>
+                    </div>
+                    <el-table :data="convertArrayToTableData(value)" style="width: 100%">
+                      <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
+                        :label="header" header-class-name="custom-table-header" />
+                    </el-table>
+                  </div>
+                </div>
+
+                <!-- Display nested objects as separate descriptions -->
+                <div v-for="(value, key) in tab.data" :key="`obj-${key}`">
+                  <div v-if="typeof value === 'object' && !Array.isArray(value) && value !== null"
+                    class="nested-object-container">
+                    <h4>{{ key }}</h4>
+                    <el-descriptions :column="1" border size="small">
+                      <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey"
+                        :label="nestedKey">
+                        {{ nestedValue }}
+                      </el-descriptions-item>
+                    </el-descriptions>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Array data shown as Table -->
-            <div v-else-if="tab.type === 'array'" class="tab-content-array">
-              <div class="table-actions">
-                <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
-                  Excel</el-button>
-                <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
-                  CSV</el-button>
+              <!-- Array data shown as Table -->
+              <div v-else-if="tab.type === 'array'" class="tab-content-array">
+                <div class="table-actions">
+                  <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
+                    Excel</el-button>
+                  <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
+                    CSV</el-button>
+                </div>
+                <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
+                  <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
+                    :label="header" header-class-name="custom-table-header" />
+                </el-table>
               </div>
-              <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
-                <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
-                  :label="header" header-class-name="custom-table-header" />
-              </el-table>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
-
-        <div class="comment-container">
-          <div class="comment-title">Value Adjustment Query</div>
-          <el-input v-model="commentAdJustField"></el-input>
-          <el-button class="comment-submit" type="success" @click="submitData">Submit Query</el-button>
+            </el-tab-pane>
+          </el-tabs>
         </div>
       </div>
+    </div>
 
-      <!-- Preview dialog -->
-      <el-dialog v-model="previewDialogVisible" title="File Preview" width="80%">
-        <div class="preview-container">
-          <iframe v-if="currentPreviewType === 'pdf'" :src="currentPreviewUrl" width="100%" height="600"></iframe>
-          <img v-else-if="currentPreviewType === 'image'" :src="currentPreviewUrl" style="max-width: 100%" />
-          <iframe v-else-if="currentPreviewType === 'powerpoint'" :src="currentPreviewUrl" width="100%"
-            height="600"></iframe>
-          <div v-else class="preview-not-available">
-            <p>Preview not available for this file type.</p>
-            <el-button type="primary" @click="downloadFile">Download File</el-button>
-          </div>
+    <!-- Action buttons -->
+    <div class="action-buttons flex-center mt-lg" v-if="selectedCategory && hasUploadedFiles">
+      <el-button type="primary" @click="generateValue" :loading="isGenerating" :disabled="!canGenerate">Generate
+        Value</el-button>
+    </div>
+
+    <!-- Preview dialog -->
+    <el-dialog v-model="previewDialogVisible" title="File Preview" width="80%">
+      <div class="preview-container">
+        <iframe v-if="currentPreviewType === 'pdf'" :src="currentPreviewUrl" width="100%" height="600"></iframe>
+        <img v-else-if="currentPreviewType === 'image'" :src="currentPreviewUrl" style="max-width: 100%" />
+        <iframe v-else-if="currentPreviewType === 'powerpoint'" :src="currentPreviewUrl" width="100%"
+          height="600"></iframe>
+        <div v-else class="preview-not-available">
+          <p>Preview not available for this file type.</p>
+          <el-button type="primary" @click="downloadFile">Download File</el-button>
         </div>
-      </el-dialog>
-
-      <!-- Notification feedback -->
-      <el-notification v-model:visible="notificationVisible" :title="notificationTitle" :type="notificationType"
-        :message="notificationMessage" :duration="3000" />
-    </div>
-    <div class="tenant-type">
-      <el-form label-position="top">
-        <el-form-item label="Tenant Type">
-          <el-select v-model="selectedTenantItem" placeholder="Select tenant type">
-            <el-option v-for="tenantItem in tenantTypes" :key="tenantItem.value" :label="tenantItem.label"
-              :value="tenantItem.value" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-    </div>
+      </div>
+    </el-dialog>
   </div>
-
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { ElMessage } from "element-plus";
+import { ref, computed, } from "vue";
+import { ElNotification } from "element-plus";
 import type { UploadUserFile } from "element-plus";
 import * as XLSX from "xlsx";
-import FileSaver from "file-saver";
+import * as FileSaver from "file-saver";
 import type {
   FileCategory,
   FileType,
   UploadedFile,
-  ApiResponse,
   JsonTab,
 } from "../types";
 import axios from "axios";
+import fileUploadJson from "../mock/file-upload.json"
 
 // Define file categories
 const fileCategories = ref<FileCategory[]>([
@@ -186,44 +157,20 @@ const fileCategories = ref<FileCategory[]>([
       { name: "Contact Info E-mail", required: false, fileType: ".xlsx", backendField: "lms_tenant_email" },
     ],
   },
-  // {
-  //   label: "HR",
-  //   value: "hr",
-  //   files: [
-  //     { name: "Resume", required: true, fileType: ".pdf" },
-  //     { name: "ID Card", required: true, fileType: ".jpg,.jpeg,.png" },
-  //     { name: "Contract", required: false, fileType: ".pdf" },
-  //   ],
-  // },
-  // {
-  //   label: "Marketing",
-  //   value: "marketing",
-  //   files: [
-  //     { name: "Presentation", required: true, fileType: ".pptx,.ppt" },
-  //     { name: "Campaign Images", required: true, fileType: ".jpg,.jpeg,.png" },
-  //   ],
-  // },
-  // {
-  //   label: "No Type (Free Upload)",
-  //   value: "no-type",
-  //   files: [],
-  // },
+  {
+    label: "Finance",
+    value: "finance",
+    files: [
+      { name: "New Lettering", required: true, fileType: ".pdf", backendField: "new_lettering" },
+      { name: "Email", required: true, fileType: ".pdf", backendField: "email" },
+      { name: "Employee", required: true, fileType: ".pdf", backendField: "employee" },
+    ],
+  },
 ]);
 
-const tenantTypes = ref([
-  {
-    label: 'Retail',
-    value: 'Retail'
-  },
-  {
-    label: 'Office',
-    value: 'Office'
-  }
-])
 
 // Refs and state
 const selectedCategory = ref("");
-const selectedTenantItem = ref("");
 const uploadedFiles = ref<UploadedFile[]>([]);
 const anyTypeFiles = ref<UploadUserFile[]>([]);
 const fileUploadRefs = ref<any[]>([]);
@@ -231,11 +178,7 @@ const previewDialogVisible = ref(false);
 const currentPreviewUrl = ref("");
 const currentPreviewType = ref("");
 const currentPreviewFile = ref<File | null>(null);
-const notificationVisible = ref(false);
-const notificationTitle = ref("");
-const notificationMessage = ref("");
-const notificationType = ref<"success" | "warning" | "info" | "error">("info");
-const commentAdJustField = ref("");
+const isGenerating = ref(false);
 
 // New refs for dynamic JSON data
 const jsonTabs = ref<JsonTab[]>([]);
@@ -270,13 +213,10 @@ function setFileUploadRef(el: any) {
   }
 }
 
-function requestGenerateValue() {
-  console.log(fileUploadRefs.value);
-  console.log(uploadedFiles.value);
-}
 
 function handleCategoryChange() {
   jsonTabs.value = [];
+  uploadedFiles.value = uploadedFiles.value.filter(f => f.categoryId !== selectedCategory.value);
 }
 
 function getRequiredFiles(): FileType[] {
@@ -289,7 +229,6 @@ function getUploadedFile(fileTypeId: string): UploadedFile | undefined {
     (f) => f.categoryId === selectedCategory.value && f.fileTypeId === fileTypeId
   );
 }
-
 
 function handleFileChange(file: UploadUserFile, fileType: FileType) {
   if (file.raw) {
@@ -330,27 +269,6 @@ function handleFileRemove(fileTypeId: string) {
   }
 }
 
-function handleAnyFileChange(file: UploadUserFile) {
-  if (file.raw) {
-    // We're storing these separately from uploadedFiles to handle the "no-type" case differently
-    const fileExists = anyTypeFiles.value.some((f) => f.name === file.name);
-    if (!fileExists) {
-      // anyTypeFiles is automatically updated by el-upload's v-model
-      // Add the preview URL to the file object
-      file.url = createObjectURL(file.raw);
-    }
-  }
-}
-
-function beforeAnyUpload(file: File) {
-  // We're not actually uploading, just collecting the files
-  return false;
-}
-
-function handleExceed() {
-  ElMessage.warning("You can only upload a maximum of 5 files");
-}
-
 function createObjectURL(file: File): string {
   return URL.createObjectURL(file);
 }
@@ -386,34 +304,6 @@ function previewFile(fileTypeId: string) {
   previewDialogVisible.value = true;
 }
 
-function previewAnyTypeFile(file: UploadUserFile) {
-  if (!file.raw) return;
-
-  currentPreviewFile.value = file.raw;
-
-  if (file.raw.type.includes("pdf")) {
-    currentPreviewType.value = "pdf";
-    currentPreviewUrl.value = file.url || "";
-  } else if (file.raw.type.includes("image")) {
-    currentPreviewType.value = "image";
-    currentPreviewUrl.value = file.url || "";
-  } else if (
-    file.raw.type.includes("powerpoint") ||
-    file.name.endsWith(".ppt") ||
-    file.name.endsWith(".pptx")
-  ) {
-    currentPreviewType.value = "powerpoint";
-    // For PowerPoint, we use the Office Live Viewer
-    currentPreviewUrl.value = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-      file.url || ""
-    )}`;
-  } else {
-    currentPreviewType.value = "other";
-    currentPreviewUrl.value = "";
-  }
-
-  previewDialogVisible.value = true;
-}
 
 function downloadFile() {
   if (currentPreviewFile.value) {
@@ -424,164 +314,6 @@ function downloadFile() {
     link.click();
     URL.revokeObjectURL(url);
   }
-}
-
-// Mock API calls with the new JSON structure
-function mockGenerateAPI(): Promise<ApiResponse> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Use the sample JSON data from test.json
-      const sampleJsonData = {
-        "Tenant Basic": {
-          "Name Line 1": "NEXT GENERATION MARINE ENGINEERING",
-          "Name Line 2": "LIMITED",
-          "Nationality": "Chinese",
-          "Debit Note E-mail": "louisa@ewpartners.fund;lyn@ewpartners.fund",
-          "Debit Note Print Flag": "E - Email Only",
-          "Effective Date": "27 Dec 2024",
-          "Mailing Name (Line 1)": "NEXT GENERATION MARINE ENGINEERING",
-          "Mailing Name (Line 2)": "LIMITED",
-          "Address 1": "Room 1903, 19/F",
-          "Address 2": "Lee Garden One",
-          "Address 3": "33 Hysan Avenue",
-          "Address 4": "Causeway Bay, Hong Kong",
-          "Phone No.": "+86 13811612788",
-          "Alt Phone No.": "+86 13521201755",
-          "Contact Person": [
-            {
-              "Name (Line 1)": "Liv Chi",
-              "Title (Line 1)": "Senior VP of HR and Admin",
-              "Phone No.": "+86 13811612788",
-              "Alt Phone No.": "+86 13521201755",
-              "Email": "liv@ewpartners.fund",
-              "Type": "Leasing"
-            },
-            {
-              "Name (Line 1)": "Lyn Guan",
-              "Title (Line 1)": "Senior Associate (Finance Department)",
-              "Phone No.": "+86 13521201755",
-              "Alt Phone No.": "+86 13811612788",
-              "Email": "lyn@ewpartners.fund",
-              "Type": "Billing"
-            }
-          ]
-        },
-        "Tenancy Particular": {
-          "Tenant": "NEXT GENERATION MARINE ENGINEERING LIMITED",
-          "LMS Trading Name": "Next Generation Marine Engineering Limited",
-          "Building": "JARDINE HOUSE",
-          "Premises": "Suite 3911",
-          "Term": "36 months",
-          "LMS Business Nature": "Asset / Investment Management",
-          "Lease Start": "01 Mar 2025",
-          "Lease End": "29 Feb 2028",
-          "R/F Period": "3 months",
-          "R/F Remarks": "01/03/2025-31/03/2025 & 01/01/2028-29/02/2028",
-          "R/R Date (1st)": "",
-          "R/R Date (2st)": "",
-          "R/R Date (3st)": "",
-          "R/R Date (4st)": "",
-          "R/R Date (5st)": "",
-          "R/R Date (6st)": "",
-          "R/R Remark": "",
-          "Surrender Date": "",
-          "License": "",
-          "Lease Type": "Office",
-          "Local Currency": "True",
-          "DSP Notice": "",
-          "Prepare Auto Pay Form": "True",
-          "Remark": "Stls.6.1.006F.Off.08 doc 01.05.2022",
-          "Lease Units": [
-            {
-              "Unit": "3911",
-              "Move In": "01 Mar 2025",
-              "Move Out": "29 Feb 2028",
-              "Lettable Area": "1,114",
-              "Rateable Value": "1,404,000",
-              "JDE Business Nature": "Asset / Investment Management",
-              "JDE Tradename": "Next Generation Marine Engineering Limited"
-            }
-          ]
-        },
-        "Recurring Billing": [
-          {
-            "Unit": "3911",
-            "Start Date": "01 Mar 2025",
-            "End Date": "31 Mar 2025",
-            "Rent (psf)": "Free",
-            "MC (psf)": "15.50psf",
-            "PC": "",
-            "Rates (psf)": "5.25psf",
-            "Remarks": "Rent Free Period, MC from MC PC SUMMARY Year 2025 (Jan - June)"
-          },
-          {
-            "Unit": "3911",
-            "Start Date": "01 Apr 2025",
-            "End Date": "30 Jun 2025",
-            "Rent (psf)": "120.00psf",
-            "MC (psf)": "15.50psf",
-            "PC": "",
-            "Rates (psf)": "5.25psf",
-            "Remarks": "MC from MC PC SUMMARY Year 2025 (Jan - June)"
-          },
-          {
-            "Unit": "3911",
-            "Start Date": "01 Jul 2025",
-            "End Date": "31 Dec 2027",
-            "Rent (psf)": "120.00psf",
-            "MC (psf)": "15.90psf",
-            "PC": "",
-            "Rates (psf)": "5.25psf",
-            "Remarks": "MC from MC PC SUMMARY Year 2025 (July - Dec)"
-          },
-          {
-            "Unit": "3911",
-            "Start Date": "01 Jan 2028",
-            "End Date": "29 Feb 2028",
-            "Rent (psf)": "Free",
-            "MC (psf)": "15.90psf",
-            "PC": "",
-            "Rates (psf)": "5.25psf",
-            "Remarks": "Rent Free Period, MC from MC PC SUMMARY Year 2025 (July - Dec)"
-          }
-        ],
-        "Turnover Rent": {},
-        "Security Deposit": {
-          "Cash Deposit": "HKD 628,747.60",
-          "No of Months": "4.00",
-          "Type of Guarantee": "Personal guarantee (Fung Kwok Chor, Alfred)",
-          "Reamrks": "4 months cash deposit"
-        },
-        "Lease Incentives": [
-          {
-            "Building Name": "JARDINE HOUSE",
-            "Display Unit Description": "Suite 3911",
-            "Rent Free Period": "01 Mar 2025 - 31 Mar 2025",
-            "Monthly Amount": "$133,680.00",
-            "Total Amount": "$133,680.00",
-            "Amortization Period": "01 Mar 2025 - 29 Feb 2028",
-            "Remark": "1 month rent free",
-            "Last Updated": "30 Apr 2025"
-          },
-          {
-            "Building Name": "JARDINE HOUSE",
-            "Display Unit Description": "Suite 3911",
-            "Rent Free Period": "01 Jan 2028 - 29 Feb 2028",
-            "Monthly Amount": "$133,680.00",
-            "Total Amount": "$267,360.00",
-            "Amortization Period": "01 Mar 2025 - 29 Feb 2028",
-            "Remark": "2 months rent free",
-            "Last Updated": "30 Apr 2025"
-          }
-        ]
-      };
-
-      resolve({
-        success: true,
-        jsonData: sampleJsonData
-      });
-    }, 1000);
-  });
 }
 
 // Functions to handle dynamic JSON data
@@ -664,190 +396,149 @@ function exportNestedTable(dataArray: any[], tableName: string | number, type: '
 
 async function generateValue() {
   try {
-    const response = await mockGenerateAPI();
-    if (response.success) {
-      if (response.jsonData) {
-        // Process the JSON data for the new UI
-        processJsonData(response.jsonData);
-        showNotification("Success", "success", "Data generated successfully");
-      } else if (response.data) {
-        // Backward compatibility with the old UI
-        showNotification("Success", "success", "Table data generated successfully");
+    isGenerating.value = true;
+    const formData = new FormData();
+
+    // Add all files for the current category
+    uploadedFiles.value.forEach((file) => {
+      if (file.categoryId === selectedCategory.value) {
+        formData.append(file.backendField, file.file);
       }
+    });
+
+    const response = await axios.post(
+      'https://poc-jsc-contract-api-hrbtg6fnc0dabhc5.eastus-01.azurewebsites.net/api/process-contract',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: 'Bearer d_and_b_jsc_contract_key'
+        }
+      })
+
+
+    if (response.data) {
+      processJsonData(response.data);
+      ElNotification({
+        title: 'Success',
+        type: 'success',
+        message: 'Data generated successfully',
+      })
     }
   } catch (error) {
     console.error("Error generating values:", error);
-    showNotification("Error", "error", "Failed to generate data");
+    ElNotification({
+      type: 'error',
+      title: 'Error',
+      message: "Failed to generate data",
+    })
+  } finally {
+    isGenerating.value = false;
+    processJsonData(fileUploadJson);
   }
 }
 
-async function submitData() {
-  // console.log(uploadedFiles.value);
-  // try {
-  //   // For now, just regenerate the data with the query
-  //   showNotification("Query Submitted", "success", "Processing your adjustment query");
-  //   // Wait a moment to simulate processing
-  //   setTimeout(() => {
-  //     generateValue();
-  //   }, 1500);
-  // } catch (error) {
-  //   console.error("Error submitting data:", error);
-  //   showNotification("Error", "error", "Failed to submit data");
-  // }
-  const formData = new FormData();
-  uploadedFiles.value.forEach((_file) => {
-    if (_file.categoryId === selectedCategory.value) {
-      formData.append(_file.backendField, _file.file);
-    }
-  })
-  axios.post('https://poc-jsc-contract-api-hrbtg6fnc0dabhc5.eastus-01.azurewebsites.net/api/process-contract', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: 'Bearer ' + 'd_and_b_jsc_contract_key'
-    }
-  }).then((res) => {
-    console.log(res);
-  }).catch((err) => {
-    console.log(err);
-  })
-}
-
-function showNotification(
-  title: string,
-  type: "success" | "warning" | "info" | "error",
-  message: string
-) {
-  notificationTitle.value = title;
-  notificationType.value = type;
-  notificationMessage.value = message;
-  notificationVisible.value = true;
-}
 </script>
 
 <style lang="less" scoped>
-.el-table :deep th {
-  background-color: #f5f7fa !important;
-}
-
-.tenant-type {
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   padding: 20px;
-  margin-top: 50px;
-  width: 300px;
 }
 
-
-:deep .el-upload-list__item-name {
-  display: flex;
-  justify-content: center;
-}
-
-:deep .el-descriptions__body {
-  box-shadow: @box-shadow-light;
-}
-
-.file-container {
-  display: flex;
-}
-
-.file-uploader-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: @spacing-lg;
+.header-section {
+  padding: 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #e6e6e6;
+  margin-bottom: 20px;
 
   h2 {
-    margin-bottom: @spacing-lg;
-    color: @primary-color;
+    margin-bottom: 20px;
+    color: #409EFF;
   }
 }
 
-.upload-section {
-  margin-top: @spacing-lg;
-  padding: @spacing-lg;
-  border: 1px solid @border-color;
-  border-radius: @border-radius;
-  box-shadow: @box-shadow-light;
-  transition: all @transition-duration;
+.main-content {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  min-height: 0; // Important for nested scrolling
+}
 
-  &:hover {
-    box-shadow: @box-shadow-base;
+.left-panel {
+  flex: 0 0 400px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.right-panel {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.upload-section {
+  h3 {
+    margin-bottom: 20px;
+    color: #303133;
   }
 }
 
 .file-upload-item {
-  margin-bottom: @spacing-lg;
-  padding: @spacing-md;
-  border-radius: @border-radius;
-  border: 1px solid @border-color-light;
-  transition: all @transition-duration;
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  transition: all 0.3s;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: @box-shadow-light;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   }
 }
 
 .file-type-name {
-  margin-bottom: @spacing-sm;
+  margin-bottom: 10px;
   font-weight: bold;
   display: flex;
   align-items: center;
-  gap: @spacing-sm;
-  font-size: @font-size-large;
-  color: @text-color;
-  display: flex;
+  gap: 10px;
+  font-size: 16px;
+  color: #303133;
   justify-content: center;
 }
 
 .uploaded-file {
-  margin-top: @spacing-sm;
+  margin-top: 10px;
   display: flex;
   align-items: center;
-  gap: @spacing-sm;
-  color: @text-color-secondary;
+  gap: 10px;
+  color: #606266;
   justify-content: center;
-}
-
-.any-type-files-list {
-  margin-top: @spacing-md;
-  padding: @spacing-md;
-  background-color: @background-light;
-  border-radius: @border-radius;
-  border: 1px solid @border-color-light;
-
-  h4 {
-    margin-top: 0;
-    margin-bottom: @spacing-sm;
-    color: @text-color-secondary;
-    font-size: @font-size-base;
-  }
-
-  .any-type-file-item {
-    margin: @spacing-sm 0;
-    display: flex;
-    align-items: center;
-    gap: @spacing-sm;
-    padding: @spacing-xs;
-    border-radius: @border-radius-small;
-
-    &:hover {
-      background-color: @border-color-light;
-    }
-  }
 }
 
 .action-buttons {
-  margin-top: @spacing-lg;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
+  padding: 20px;
+  background-color: #fff;
+  border-top: 1px solid #e6e6e6;
 }
 
 .results-section {
-  margin-top: @spacing-xl;
-
   .table-actions {
-    margin-bottom: @spacing-md;
+    margin-bottom: 15px;
     display: flex;
-    gap: @spacing-sm;
+    gap: 10px;
   }
 }
 
@@ -859,36 +550,16 @@ function showNotification(
 
   .preview-not-available {
     text-align: center;
-    padding: @spacing-lg;
-    color: @text-color-light;
+    padding: 20px;
+    color: #909399;
 
     p {
-      margin-bottom: @spacing-md;
+      margin-bottom: 15px;
     }
   }
 }
 
-.comment-container {
-  text-align: left;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  border: 1px solid #e6e6e6;
-
-  .comment-title {
-    margin: 15px 0 15px 0;
-    font-weight: bold;
-    color: #606266;
-  }
-
-  .comment-submit {
-    margin: 15px 0 15px 0;
-    float: right;
-  }
-}
-
-/* New styles for tabs and dynamic content */
+/* Styles for tabs and dynamic content */
 .tab-content-object,
 .tab-content-array {
   padding: 15px;
@@ -935,14 +606,6 @@ function showNotification(
   }
 }
 
-.table-actions {
-  margin-bottom: 15px;
-
-  .el-button {
-    margin-right: 10px;
-  }
-}
-
 :deep(.custom-table-header) {
   background-color: #f5f7fa;
   color: #606266;
@@ -953,5 +616,10 @@ function showNotification(
   margin-bottom: 15px;
   border-radius: 4px;
   overflow: hidden;
+}
+
+:deep(.el-upload-list__item-name) {
+  display: flex;
+  justify-content: center;
 }
 </style>

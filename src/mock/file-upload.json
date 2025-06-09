@@ -1,0 +1,144 @@
+{
+    "Tenant Basic": {
+        "Name Line 1": "NEXT GENERATION MARINE ENGINEERING",
+        "Name Line 2": "LIMITED",
+        "Nationality": "Chinese",
+        "Debit Note E-mail": "louisa@ewpartners.fund;lyn@ewpartners.fund",
+        "Debit Note Print Flag": "E - Email Only",
+        "Effective Date": "27 Dec 2024",
+        "Mailing Name (Line 1)": "NEXT GENERATION MARINE ENGINEERING",
+        "Mailing Name (Line 2)": "LIMITED",
+        "Address 1": "Room 1903, 19/F",
+        "Address 2": "Lee Garden One",
+        "Address 3": "33 Hysan Avenue",
+        "Address 4": "Causeway Bay, Hong Kong",
+        "Phone No.": "+86 13811612788",
+        "Alt Phone No.": "+86 13521201755",
+        "Contact Person": [
+            {
+                "Name (Line 1)": "Liv Chi",
+                "Title (Line 1)": "Senior VP of HR and Admin",
+                "Phone No.": "+86 13811612788",
+                "Alt Phone No.": "+86 13521201755",
+                "Email": "liv@ewpartners.fund",
+                "Type": "Leasing"
+            },
+            {
+                "Name (Line 1)": "Lyn Guan",
+                "Title (Line 1)": "Senior Associate (Finance Department)",
+                "Phone No.": "+86 13521201755",
+                "Alt Phone No.": "+86 13811612788",
+                "Email": "lyn@ewpartners.fund",
+                "Type": "Billing"
+            }
+        ]
+    },
+    "Tenancy Particular": {
+        "Tenant": "NEXT GENERATION MARINE ENGINEERING LIMITED",
+        "LMS Trading Name": "Next Generation Marine Engineering Limited",
+        "Building": "JARDINE HOUSE",
+        "Premises": "Suite 3911",
+        "Term": "36 months",
+        "LMS Business Nature": "Asset / Investment Management",
+        "Lease Start": "01 Mar 2025",
+        "Lease End": "29 Feb 2028",
+        "R/F Period": "3 months",
+        "R/F Remarks": "01/03/2025-31/03/2025 & 01/01/2028-29/02/2028",
+        "R/R Date (1st)": "",
+        "R/R Date (2st)": "",
+        "R/R Date (3st)": "",
+        "R/R Date (4st)": "",
+        "R/R Date (5st)": "",
+        "R/R Date (6st)": "",
+        "R/R Remark": "",
+        "Surrender Date": "",
+        "License": "",
+        "Lease Type": "Office",
+        "Local Currency": "True",
+        "DSP Notice": "",
+        "Prepare Auto Pay Form": "True",
+        "Remark": "Stls.6.1.006F.Off.08 doc 01.05.2022",
+        "Lease Units": [
+            {
+                "Unit": "3911",
+                "Move In": "01 Mar 2025",
+                "Move Out": "29 Feb 2028",
+                "Lettable Area": "1,114",
+                "Rateable Value": "1,404,000",
+                "JDE Business Nature": "Asset / Investment Management",
+                "JDE Tradename": "Next Generation Marine Engineering Limited"
+            }
+        ]
+    },
+    "Recurring Billing": [
+        {
+            "Unit": "3911",
+            "Start Date": "01 Mar 2025",
+            "End Date": "31 Mar 2025",
+            "Rent (psf)": "Free",
+            "MC (psf)": "15.50psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "Rent Free Period, MC from MC PC SUMMARY Year 2025 (Jan - June)"
+        },
+        {
+            "Unit": "3911",
+            "Start Date": "01 Apr 2025",
+            "End Date": "30 Jun 2025",
+            "Rent (psf)": "120.00psf",
+            "MC (psf)": "15.50psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "MC from MC PC SUMMARY Year 2025 (Jan - June)"
+        },
+        {
+            "Unit": "3911",
+            "Start Date": "01 Jul 2025",
+            "End Date": "31 Dec 2027",
+            "Rent (psf)": "120.00psf",
+            "MC (psf)": "15.90psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "MC from MC PC SUMMARY Year 2025 (July - Dec)"
+        },
+        {
+            "Unit": "3911",
+            "Start Date": "01 Jan 2028",
+            "End Date": "29 Feb 2028",
+            "Rent (psf)": "Free",
+            "MC (psf)": "15.90psf",
+            "PC": "",
+            "Rates (psf)": "5.25psf",
+            "Remarks": "Rent Free Period, MC from MC PC SUMMARY Year 2025 (July - Dec)"
+        }
+    ],
+    "Turnover Rent": {},
+    "Security Deposit": {
+        "Cash Deposit": "HKD 628,747.60",
+        "No of Months": "4.00",
+        "Type of Guarantee": "Personal guarantee (Fung Kwok Chor, Alfred)",
+        "Reamrks": "4 months cash deposit"
+    },
+    "Lease Incentives": [
+        {
+            "Building Name": "JARDINE HOUSE",
+            "Display Unit Description": "Suite 3911",
+            "Rent Free Period": "01 Mar 2025 - 31 Mar 2025",
+            "Monthly Amount": "$133,680.00",
+            "Total Amount": "$133,680.00",
+            "Amortization Period": "01 Mar 2025 - 29 Feb 2028",
+            "Remark": "1 month rent free",
+            "Last Updated": "30 Apr 2025"
+        },
+        {
+            "Building Name": "JARDINE HOUSE",
+            "Display Unit Description": "Suite 3911",
+            "Rent Free Period": "01 Jan 2028 - 29 Feb 2028",
+            "Monthly Amount": "$133,680.00",
+            "Total Amount": "$267,360.00",
+            "Amortization Period": "01 Mar 2025 - 29 Feb 2028",
+            "Remark": "2 months rent free",
+            "Last Updated": "30 Apr 2025"
+        }
+    ]
+}
