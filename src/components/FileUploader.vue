@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { ElNotification } from "element-plus";
 import type { UploadUserFile } from "element-plus";
 import * as XLSX from "xlsx";
@@ -244,6 +244,11 @@ const canGenerate = computed(() => {
       )
     );
   }
+});
+
+// Lifecycle hooks
+onBeforeMount(() => {
+  // Initialize with the default file upload JSON data
 });
 
 // Methods
@@ -715,6 +720,16 @@ async function generateValue() {
   margin-bottom: 15px;
   border-radius: 4px;
   overflow: hidden;
+}
+
+:deep(.el-table) {
+  margin-bottom: 15px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f5f7fa !important;
 }
 
 :deep(.el-upload-list__item-name) {
