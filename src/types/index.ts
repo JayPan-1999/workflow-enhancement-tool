@@ -5,6 +5,12 @@ export interface FileType {
     backendField: string;
 }
 
+export interface PreviewFileParams {
+    pageNo?: number,
+    [key: string]: any
+}
+
+
 export interface FileCategory {
     label: string;
     value: string;

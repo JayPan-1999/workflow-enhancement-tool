@@ -1,0 +1,88 @@
+{
+    "Tenant Basic": {
+        "Name Line 1": "signed_lease|1",
+        "Name Line 2": "mc_pc_summary|2",
+        "Nationality": "deposit_fact_sheet|2",
+        "Debit Note E-mail": "deposit_fact_sheet|1",
+        "Debit Note Print Flag": "signed_lease|2",
+        "Effective Date": "mc_pc_summary|1",
+        "Mailing Name (Line 1)": "mc_pc_summary|1",
+        "Mailing Name (Line 2)": "mc_pc_summary|1",
+        "Address 1": "mc_pc_summary|1",
+        "Address 2": "mc_pc_summary|1",
+        "Address 3": "mc_pc_summary|1",
+        "Address 4": "mc_pc_summary|1",
+        "Phone No.": "mc_pc_summary|1",
+        "Alt Phone No.": "mc_pc_summary|1",
+        "Contact Person": {
+            "Name (Line 1)": "deposit_fact_sheet|2",
+            "Title (Line 1)": "deposit_fact_sheet|2",
+            "Phone No.": "deposit_fact_sheet|2",
+            "Alt Phone No.": "deposit_fact_sheet|2",
+            "Email": "deposit_fact_sheet|2",
+            "Type": "deposit_fact_sheet|2"
+        }
+    },
+    "Tenancy Particular": {
+        "Tenant": "mc_pc_summary|1",
+        "LMS Trading Name": "mc_pc_summary|1",
+        "Building": "mc_pc_summary|1",
+        "Premises": "mc_pc_summary|1",
+        "Term": "mc_pc_summary|1",
+        "LMS Business Nature": "mc_pc_summary|1",
+        "Lease Start": "mc_pc_summary|1",
+        "Lease End": "mc_pc_summary|1",
+        "R/F Period": "mc_pc_summary|1",
+        "R/F Remarks": "mc_pc_summary|1",
+        "R/R Date (1st)": "mc_pc_summary|1",
+        "R/R Date (2st)": "mc_pc_summary|1",
+        "R/R Date (3st)": "mc_pc_summary|1",
+        "R/R Date (4st)": "mc_pc_summary|1",
+        "R/R Date (5st)": "mc_pc_summary|1",
+        "R/R Date (6st)": "mc_pc_summary|1",
+        "R/R Remark": "mc_pc_summary|1",
+        "Surrender Date": "mc_pc_summary|1",
+        "License": "mc_pc_summary|1",
+        "Lease Type": "mc_pc_summary|1",
+        "Local Currency": "mc_pc_summary|1",
+        "DSP Notice": "mc_pc_summary|1",
+        "Prepare Auto Pay Form": "mc_pc_summary|1",
+        "Remark": "mc_pc_summary|1",
+        "Lease Units": {
+            "Unit": "mc_pc_summary|1",
+            "Move In": "mc_pc_summary|1",
+            "Move Out": "mc_pc_summary|1",
+            "Lettable Area": "mc_pc_summary|1",
+            "Rateable Value": "mc_pc_summary|1",
+            "JDE Business Nature": "mc_pc_summary|1",
+            "JDE Tradename": "mc_pc_summary|1"
+        }
+    },
+    "Recurring Billing": {
+        "Unit": "mc_pc_summary|1",
+        "Start Date": "mc_pc_summary|1",
+        "End Date": "mc_pc_summary|1",
+        "Rent (psf)": "mc_pc_summary|1",
+        "MC (psf)": "mc_pc_summary|1",
+        "PC": "mc_pc_summary|1",
+        "Rates (psf)": "mc_pc_summary|1",
+        "Remarks": "mc_pc_summary|1"
+    },
+    "Turnover Rent": {},
+    "Security Deposit": {
+        "Cash Deposit": "mc_pc_summary|1",
+        "No of Months": "mc_pc_summary|1",
+        "Type of Guarantee": "mc_pc_summary|1",
+        "Reamrks": "mc_pc_summary|1"
+    },
+    "Lease Incentives": {
+        "Building Name": "mc_pc_summary|1",
+        "Display Unit Description": "mc_pc_summary|1",
+        "Rent Free Period": "mc_pc_summary|1",
+        "Monthly Amount": "mc_pc_summary|1",
+        "Total Amount": "mc_pc_summary|1",
+        "Amortization Period": "mc_pc_summary|1",
+        "Remark": "mc_pc_summary|1",
+        "Last Updated": "mc_pc_summary|1"
+    }
+}

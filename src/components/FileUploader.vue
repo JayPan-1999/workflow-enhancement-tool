@@ -30,9 +30,12 @@
                 :on-remove="() => handleFileRemove(fileType.name)">
                 <el-button type="primary">Upload {{ fileType.name }}</el-button>
               </el-upload>
-              <div v-if="getUploadedFile(fileType.name)" class="uploaded-file mt-sm">
-                <el-tag type="success">Uploaded: {{ getUploadedFile(fileType.name)?.file.name }}</el-tag>
-                <el-button type="text" @click="previewFile(fileType.name)">Preview</el-button>
+              <div v-if="getUploadedFile(fileType.backendField)" class="uploaded-file mt-sm">
+                <el-tag type="success">
+                  <el-text truncated class="uploaded-file-text">{{ getUploadedFile(fileType.backendField)?.file.name
+                  }}</el-text>
+                </el-tag>
+                <el-button type="text" @click="previewFile(fileType.backendField)">Preview</el-button>
               </div>
             </div>
           </div>
@@ -51,7 +54,7 @@
                   <template v-for="(value, key) in tab.data" :key="key">
                     <!-- Only display primitive values in descriptions -->
                     <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
-                      {{ value }}
+                      <span class="field-item" @click="jumpToPreview(tab, key)">{{ value }}</span>
                     </el-descriptions-item>
                   </template>
                 </el-descriptions>
@@ -68,7 +71,11 @@
                     </div>
                     <el-table :data="convertArrayToTableData(value)" style="width: 100%">
                       <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
-                        :label="header" header-class-name="custom-table-header" />
+                        :label="header" header-class-name="custom-table-header">
+                        <template #default="scope">
+                          <span class="field-item" @click="jumpToPreview(tab, header)">{{ scope.row[header] }}</span>
+                        </template>
+                      </el-table-column>
                     </el-table>
                   </div>
                 </div>
@@ -81,7 +88,7 @@
                     <el-descriptions :column="1" border size="small">
                       <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey"
                         :label="nestedKey">
-                        {{ nestedValue }}
+                        <span class="field-item" @click="jumpToPreview(tab, nestedKey, key)"> {{ nestedValue }}</span>
                       </el-descriptions-item>
                     </el-descriptions>
                   </div>
@@ -98,7 +105,11 @@
                 </div>
                 <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
                   <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
-                    :label="header" header-class-name="custom-table-header" />
+                    :label="header" header-class-name="custom-table-header">
+                    <template #default="scope">
+                      <span class="field-item" @click="jumpToPreview(tab, header)">{{ scope.row[header] }}</span>
+                    </template>
+                  </el-table-column>
                 </el-table>
               </div>
             </el-tab-pane>
@@ -114,9 +125,35 @@
     </div>
 
     <!-- Preview dialog -->
-    <el-dialog v-model="previewDialogVisible" title="File Preview" width="80%">
+    <el-dialog v-model="previewDialogVisible" width="80%" :show-close="false" draggable
+      :fullscreen="isDialogFullScreen">
+      <template #header="{ close, titleId, titleClass }">
+        <div class="dialog-header">
+          <h4 :id="titleId" :class="titleClass">File Preview</h4>
+          <div>
+            <el-button @click="openPreviewInNewTab">
+              <el-icon class="el-icon--left">
+                <View />
+              </el-icon>
+              Open in New Tab
+            </el-button>
+            <el-button @click="isDialogFullScreen = !isDialogFullScreen">
+              <el-icon class="el-icon--left">
+                <FullScreen />
+              </el-icon>
+              Full Screen
+            </el-button>
+            <el-button type="danger" @click="close">
+              <el-icon class="el-icon--left">
+                <CircleCloseFilled />
+              </el-icon>
+              Close
+            </el-button>
+          </div>
+        </div>
+      </template>
       <div class="preview-container">
-        <iframe v-if="currentPreviewType === 'pdf'" :src="currentPreviewUrl" width="100%" height="600"></iframe>
+        <iframe v-if="currentPreviewType === 'pdf'" :src="currentPreviewUrl" width="100%"></iframe>
         <img v-else-if="currentPreviewType === 'image'" :src="currentPreviewUrl" style="max-width: 100%" />
         <iframe v-else-if="currentPreviewType === 'powerpoint'" :src="currentPreviewUrl" width="100%"
           height="600"></iframe>
@@ -140,9 +177,11 @@ import type {
   FileType,
   UploadedFile,
   JsonTab,
+  PreviewFileParams,
 } from "../types";
 import axios from "axios";
-import fileUploadJson from "../mock/file-upload.json"
+import fileUploadJson from "../asset/file-upload.json"
+import localFieldMapJson from '../asset/local-field-map.json'
 
 // Define file categories
 const fileCategories = ref<FileCategory[]>([
@@ -152,9 +191,9 @@ const fileCategories = ref<FileCategory[]>([
     files: [
       { name: "Signed Lease", required: true, fileType: ".pdf", backendField: "signed_lease" },
       { name: "Side Letter", required: false, fileType: ".pdf", backendField: "signed_side_letter" },
-      { name: "MC PC Summary", required: true, fileType: ".xlsx,.xls", backendField: "mc_pc_summary" },
+      { name: "MC PC Summary", required: true, fileType: ".pdf", backendField: "mc_pc_summary" },
       { name: "Deposit Fact Sheet", required: true, fileType: ".pdf", backendField: "deposit_fact_sheet" },
-      { name: "Contact Info E-mail", required: false, fileType: ".xlsx", backendField: "lms_tenant_email" },
+      { name: "Contact Info E-mail", required: false, fileType: ".xlsx,.xls", backendField: "lms_tenant_email" },
     ],
   },
   {
@@ -179,6 +218,7 @@ const currentPreviewUrl = ref("");
 const currentPreviewType = ref("");
 const currentPreviewFile = ref<File | null>(null);
 const isGenerating = ref(false);
+const isDialogFullScreen = ref(false);
 
 // New refs for dynamic JSON data
 const jsonTabs = ref<JsonTab[]>([]);
@@ -213,6 +253,20 @@ function setFileUploadRef(el: any) {
   }
 }
 
+function jumpToPreview(tab: JsonTab, field: any, nestedField?: any) {
+  let location = (localFieldMapJson as Record<string, any>)[tab.name]?.[field];
+  if (nestedField) {
+    location = (localFieldMapJson as Record<string, any>)[tab.name]?.[nestedField]?.[field];
+  }
+  const [fileBackendId, pageNo] = location?.split('|') || [];
+  previewFile(fileBackendId, { pageNo });
+}
+
+function openPreviewInNewTab() {
+  if (currentPreviewUrl.value) {
+    window.open(currentPreviewUrl.value, "_blank");
+  }
+}
 
 function handleCategoryChange() {
   jsonTabs.value = [];
@@ -224,9 +278,9 @@ function getRequiredFiles(): FileType[] {
   return category?.files || [];
 }
 
-function getUploadedFile(fileTypeId: string): UploadedFile | undefined {
+function getUploadedFile(fileTypeBackendField: string): UploadedFile | undefined {
   return uploadedFiles.value.find(
-    (f) => f.categoryId === selectedCategory.value && f.fileTypeId === fileTypeId
+    (f) => f.categoryId === selectedCategory.value && f.backendField === fileTypeBackendField
   );
 }
 
@@ -273,8 +327,8 @@ function createObjectURL(file: File): string {
   return URL.createObjectURL(file);
 }
 
-function previewFile(fileTypeId: string) {
-  const uploadedFile = getUploadedFile(fileTypeId);
+function previewFile(fileTypeBackendField: string, otherParams?: PreviewFileParams) {
+  const uploadedFile = getUploadedFile(fileTypeBackendField);
   if (!uploadedFile || !uploadedFile.file) return;
 
   const file = uploadedFile.file;
@@ -282,7 +336,12 @@ function previewFile(fileTypeId: string) {
 
   if (file.type.includes("pdf")) {
     currentPreviewType.value = "pdf";
-    currentPreviewUrl.value = uploadedFile.previewUrl || "";
+    if (otherParams && otherParams.pageNo) {
+      // If page number is provided, append it to the URL
+      currentPreviewUrl.value = `${uploadedFile.previewUrl}#page=${otherParams.pageNo}`;
+    } else {
+      currentPreviewUrl.value = uploadedFile.previewUrl || "";
+    }
   } else if (file.type.includes("image")) {
     currentPreviewType.value = "image";
     currentPreviewUrl.value = uploadedFile.previewUrl || "";
@@ -441,6 +500,31 @@ async function generateValue() {
 </script>
 
 <style lang="less" scoped>
+.dialog-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+:deep(.el-dialog.is-fullscreen) {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+:deep(.el-dialog__body) {
+  flex: 1;
+}
+
+
+:deep(.el-dialog__header) {
+  background-color: #fff;
+}
+
+:deep(.el-dialog__header) h4 {
+  color: #303133;
+}
+
 .app-container {
   display: flex;
   flex-direction: column;
@@ -525,6 +609,10 @@ async function generateValue() {
   justify-content: center;
 }
 
+.uploaded-file-text {
+  max-width: 200px;
+}
+
 .action-buttons {
   margin-top: 20px;
   display: flex;
@@ -547,6 +635,13 @@ async function generateValue() {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  min-height: 600px;
+  height: 100%;
+
+  iframe {
+    flex: 1;
+  }
 
   .preview-not-available {
     text-align: center;
@@ -557,6 +652,10 @@ async function generateValue() {
       margin-bottom: 15px;
     }
   }
+}
+
+.field-item {
+  cursor: pointer;
 }
 
 /* Styles for tabs and dynamic content */
