@@ -53,7 +53,19 @@
                 <el-descriptions :title="tab.name" :column="2" border>
                   <template v-for="(value, key) in tab.data" :key="key">
                     <!-- Only display primitive values in descriptions -->
-                    <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
+                    <el-descriptions-item v-if="typeof value !== 'object' || value === null">
+                      <template #label>
+                        <div class="header-with-icon">
+                          <el-tooltip :content="key" placement="top" :show-after="500">
+                            <span class="truncated-text">{{ key }}</span>
+                          </el-tooltip>
+                          <el-tooltip :content="getColumnDescription(tab, key)" placement="top">
+                            <el-icon class="question-icon">
+                              <QuestionFilled />
+                            </el-icon>
+                          </el-tooltip>
+                        </div>
+                      </template>
                       <div class="field-with-edit">
                         <el-tooltip :content="String(value)" placement="top" :show-after="500">
                           <span class="field-item truncated-text" @click="jumpToPreview(tab, key)">{{ value }}</span>
@@ -71,14 +83,26 @@
                   <div v-if="Array.isArray(value)" class="nested-table-container">
                     <h4>{{ key }}</h4>
                     <div class="table-actions">
-                      <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
+                      <!-- <el-button @click="exportNestedTable(value, key)" size="small" type="primary">Export as
                         Excel</el-button>
                       <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
-                        CSV</el-button>
+                        CSV</el-button> -->
                     </div>
                     <el-table border :data="convertArrayToTableData(value)" style="width: 100%">
                       <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
                         :label="header" header-class-name="custom-table-header">
+                        <template #header>
+                          <div class="header-with-icon">
+                            <el-tooltip :content="header" placement="top" :show-after="500">
+                              <span class="truncated-text">{{ header }}</span>
+                            </el-tooltip>
+                            <el-tooltip :content="getColumnDescription(tab, key, header)" placement="top">
+                              <el-icon class="question-icon">
+                                <QuestionFilled />
+                              </el-icon>
+                            </el-tooltip>
+                          </div>
+                        </template>
                         <template #default="scope">
                           <div class="field-with-edit">
                             <el-tooltip :content="String(scope.row[header])" placement="top" :show-after="500">
@@ -101,8 +125,19 @@
                     class="nested-object-container">
                     <h4>{{ key }}</h4>
                     <el-descriptions :column="1" border size="small">
-                      <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey"
-                        :label="nestedKey">
+                      <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey">
+                        <template #label>
+                          <div class="header-with-icon">
+                            <el-tooltip :content="nestedKey" placement="top" :show-after="500">
+                              <span class="truncated-text">{{ nestedKey }}</span>
+                            </el-tooltip>
+                            <el-tooltip :content="getColumnDescription(tab, nestedKey)" placement="top">
+                              <el-icon class="question-icon">
+                                <QuestionFilled />
+                              </el-icon>
+                            </el-tooltip>
+                          </div>
+                        </template>
                         <div class="field-with-edit">
                           <el-tooltip :content="String(nestedValue)" placement="top" :show-after="500">
                             <span class="field-item truncated-text" @click="jumpToPreview(tab, nestedKey)">{{
@@ -121,14 +156,26 @@
               <!-- Array data shown as Table -->
               <div v-else-if="tab.type === 'array'" class="tab-content-array">
                 <div class="table-actions">
-                  <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
+                  <!-- <el-button @click="exportNestedTable(tab.data, tab.name)" size="small" type="primary">Export as
                     Excel</el-button>
                   <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
-                    CSV</el-button>
+                    CSV</el-button> -->
                 </div>
                 <el-table border :data="convertArrayToTableData(tab.data)" style="width: 100%">
                   <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
                     :label="header" header-class-name="custom-table-header">
+                    <template #header>
+                      <div class="header-with-icon">
+                        <el-tooltip :content="header" placement="top" :show-after="500">
+                          <span class="truncated-text">{{ header }}</span>
+                        </el-tooltip>
+                        <el-tooltip :content="getColumnDescription(tab, header)" placement="top">
+                          <el-icon class="question-icon">
+                            <QuestionFilled />
+                          </el-icon>
+                        </el-tooltip>
+                      </div>
+                    </template>
                     <template #default="scope">
                       <div class="field-with-edit">
                         <el-tooltip :content="String(scope.row[header])" placement="top" :show-after="500">
@@ -228,7 +275,8 @@ import type {
 import axios from "axios";
 import fileUploadJson from "../assets/file-upload.json"
 import localFieldMapJson from '../assets/local-field-map.json'
-import { Edit } from '@element-plus/icons-vue'
+import descriptionFieldMapJson from '../assets/description-field-map.json'
+import { Edit, QuestionFilled } from '@element-plus/icons-vue'
 
 // Define file categories
 const fileCategories = ref<FileCategory[]>([
@@ -312,6 +360,15 @@ function setFileUploadRef(el: any) {
   if (el) {
     fileUploadRefs.value.push(el);
   }
+}
+
+function getColumnDescription(tab: JsonTab, field: any, nestedField?: any): string {
+  let tip = (descriptionFieldMapJson as Record<string, any>)[tab.name]?.[field];
+  if (nestedField) {
+    tip = (descriptionFieldMapJson as Record<string, any>)[tab.name]?.[field]?.[nestedField];
+  }
+  return tip || "";
+
 }
 
 function jumpToPreview(tab: JsonTab, field: any, nestedField?: any) {
@@ -745,6 +802,7 @@ function handleEditSave() {
 .tab-content-object,
 .tab-content-array {
   padding: 15px;
+  overflow: scroll;
 
   h4 {
     margin-top: 20px;
@@ -847,6 +905,35 @@ function handleEditSave() {
 
 :deep(.el-table__cell) {
   .field-with-edit {
+    width: 100%;
+  }
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.question-icon {
+  color: #909399;
+  cursor: help;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #409EFF;
+  }
+}
+
+:deep(.el-descriptions__label) {
+  .header-with-icon {
+    width: 100%;
+  }
+}
+
+:deep(.el-table__header) {
+  .header-with-icon {
     width: 100%;
   }
 }

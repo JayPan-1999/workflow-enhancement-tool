@@ -1,0 +1,88 @@
+{
+    "Tenant Basic": {
+        "Name Line 1": "locate in the center of the page 9 in document 5",
+        "Name Line 2": "locate in the center of the page 2 in document 3",
+        "Nationality": "locate in the center of the page 7 in document 5",
+        "Debit Note E-mail": "locate in the center of the page 5 in document 3",
+        "Debit Note Print Flag": "locate in the center of the page 8 in document 2",
+        "Effective Date": "locate in the center of the page 7 in document 4",
+        "Mailing Name (Line 1)": "locate in the center of the page 5 in document 5",
+        "Mailing Name (Line 2)": "locate in the center of the page 2 in document 5",
+        "Address 1": "locate in the center of the page 2 in document 5",
+        "Address 2": "locate in the center of the page 7 in document 4",
+        "Address 3": "locate in the center of the page 9 in document 4",
+        "Address 4": "locate in the center of the page 1 in document 5",
+        "Phone No.": "locate in the center of the page 9 in document 2",
+        "Alt Phone No.": "locate in the center of the page 8 in document 4",
+        "Contact Person": {
+            "Name (Line 1)": "locate in the center of the page 3 in document 4",
+            "Title (Line 1)": "locate in the center of the page 9 in document 5",
+            "Phone No.": "locate in the center of the page 7 in document 1",
+            "Alt Phone No.": "locate in the center of the page 8 in document 3",
+            "Email": "locate in the center of the page 4 in document 1",
+            "Type": "locate in the center of the page 1 in document 5"
+        }
+    },
+    "Tenancy Particular": {
+        "Tenant": "locate in the center of the page 6 in document 5",
+        "LMS Trading Name": "locate in the center of the page 8 in document 3",
+        "Building": "locate in the center of the page 3 in document 5",
+        "Premises": "locate in the center of the page 5 in document 2",
+        "Term": "locate in the center of the page 7 in document 1",
+        "LMS Business Nature": "locate in the center of the page 5 in document 2",
+        "Lease Start": "locate in the center of the page 2 in document 2",
+        "Lease End": "locate in the center of the page 5 in document 5",
+        "R/F Period": "locate in the center of the page 8 in document 5",
+        "R/F Remarks": "locate in the center of the page 9 in document 4",
+        "R/R Date (1st)": "locate in the center of the page 2 in document 1",
+        "R/R Date (2st)": "locate in the center of the page 5 in document 4",
+        "R/R Date (3st)": "locate in the center of the page 9 in document 1",
+        "R/R Date (4st)": "locate in the center of the page 4 in document 2",
+        "R/R Date (5st)": "locate in the center of the page 3 in document 4",
+        "R/R Date (6st)": "locate in the center of the page 3 in document 5",
+        "R/R Remark": "locate in the center of the page 5 in document 5",
+        "Surrender Date": "locate in the center of the page 6 in document 5",
+        "License": "locate in the center of the page 3 in document 2",
+        "Lease Type": "locate in the center of the page 7 in document 5",
+        "Local Currency": "locate in the center of the page 2 in document 5",
+        "DSP Notice": "locate in the center of the page 1 in document 3",
+        "Prepare Auto Pay Form": "locate in the center of the page 5 in document 5",
+        "Remark": "locate in the center of the page 8 in document 2",
+        "Lease Units": {
+            "Unit": "locate in the center of the page 5 in document 5",
+            "Move In": "locate in the center of the page 2 in document 4",
+            "Move Out": "locate in the center of the page 5 in document 5",
+            "Lettable Area": "locate in the center of the page 8 in document 3",
+            "Rateable Value": "locate in the center of the page 8 in document 4",
+            "JDE Business Nature": "locate in the center of the page 9 in document 4",
+            "JDE Tradename": "locate in the center of the page 9 in document 1"
+        }
+    },
+    "Recurring Billing": {
+        "Unit": "locate in the center of the page 5 in document 2",
+        "Start Date": "locate in the center of the page 4 in document 4",
+        "End Date": "locate in the center of the page 7 in document 3",
+        "Rent (psf)": "locate in the center of the page 9 in document 5",
+        "MC (psf)": "locate in the center of the page 7 in document 4",
+        "PC": "locate in the center of the page 9 in document 5",
+        "Rates (psf)": "locate in the center of the page 7 in document 3",
+        "Remarks": "locate in the center of the page 4 in document 4"
+    },
+    "Turnover Rent": {},
+    "Security Deposit": {
+        "Cash Deposit": "locate in the center of the page 7 in document 1",
+        "No of Months": "locate in the center of the page 3 in document 3",
+        "Type of Guarantee": "locate in the center of the page 2 in document 3",
+        "Reamrks": "locate in the center of the page 9 in document 4"
+    },
+    "Lease Incentives": {
+        "Building Name": "locate in the center of the page 1 in document 1",
+        "Display Unit Description": "locate in the center of the page 5 in document 2",
+        "Rent Free Period": "locate in the center of the page 1 in document 2",
+        "Monthly Amount": "locate in the center of the page 3 in document 3",
+        "Total Amount": "locate in the center of the page 5 in document 2",
+        "Amortization Period": "locate in the center of the page 8 in document 3",
+        "Remark": "locate in the center of the page 4 in document 1",
+        "Last Updated": "locate in the center of the page 9 in document 4"
+    }
+}
