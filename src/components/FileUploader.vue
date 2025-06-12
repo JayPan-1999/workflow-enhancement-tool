@@ -33,7 +33,7 @@
               <div v-if="getUploadedFile(fileType.backendField)" class="uploaded-file mt-sm">
                 <el-tag type="success">
                   <el-text truncated class="uploaded-file-text">{{ getUploadedFile(fileType.backendField)?.file.name
-                  }}</el-text>
+                    }}</el-text>
                 </el-tag>
                 <el-button type="text" @click="previewFile(fileType.backendField)">Preview</el-button>
               </div>
@@ -54,7 +54,14 @@
                   <template v-for="(value, key) in tab.data" :key="key">
                     <!-- Only display primitive values in descriptions -->
                     <el-descriptions-item v-if="typeof value !== 'object' || value === null" :label="key">
-                      <span class="field-item" @click="jumpToPreview(tab, key)">{{ value }}</span>
+                      <div class="field-with-edit">
+                        <el-tooltip :content="String(value)" placement="top" :show-after="500">
+                          <span class="field-item truncated-text" @click="jumpToPreview(tab, key)">{{ value }}</span>
+                        </el-tooltip>
+                        <el-icon class="edit-icon" @click="handleEdit(tab.data, key)">
+                          <Edit />
+                        </el-icon>
+                      </div>
                     </el-descriptions-item>
                   </template>
                 </el-descriptions>
@@ -69,11 +76,19 @@
                       <el-button @click="exportNestedTable(value, key, 'CSV')" size="small" type="primary">Export as
                         CSV</el-button>
                     </div>
-                    <el-table :data="convertArrayToTableData(value)" style="width: 100%">
+                    <el-table border :data="convertArrayToTableData(value)" style="width: 100%">
                       <el-table-column v-for="header in getNestedTableHeaders(value)" :key="header" :prop="header"
                         :label="header" header-class-name="custom-table-header">
                         <template #default="scope">
-                          <span class="field-item" @click="jumpToPreview(tab, header)">{{ scope.row[header] }}</span>
+                          <div class="field-with-edit">
+                            <el-tooltip :content="String(scope.row[header])" placement="top" :show-after="500">
+                              <span class="field-item truncated-text" @click="jumpToPreview(tab, key, header)">{{
+                                scope.row[header] }}</span>
+                            </el-tooltip>
+                            <el-icon class="edit-icon" @click="handleEdit(scope.row, header)">
+                              <Edit />
+                            </el-icon>
+                          </div>
                         </template>
                       </el-table-column>
                     </el-table>
@@ -88,7 +103,15 @@
                     <el-descriptions :column="1" border size="small">
                       <el-descriptions-item v-for="(nestedValue, nestedKey) in value" :key="nestedKey"
                         :label="nestedKey">
-                        <span class="field-item" @click="jumpToPreview(tab, nestedKey, key)"> {{ nestedValue }}</span>
+                        <div class="field-with-edit">
+                          <el-tooltip :content="String(nestedValue)" placement="top" :show-after="500">
+                            <span class="field-item truncated-text" @click="jumpToPreview(tab, nestedKey)">{{
+                              nestedValue }}</span>
+                          </el-tooltip>
+                          <el-icon class="edit-icon" @click="handleEdit(value, nestedKey)">
+                            <Edit />
+                          </el-icon>
+                        </div>
                       </el-descriptions-item>
                     </el-descriptions>
                   </div>
@@ -103,11 +126,19 @@
                   <el-button @click="exportNestedTable(tab.data, tab.name, 'CSV')" size="small" type="primary">Export as
                     CSV</el-button>
                 </div>
-                <el-table :data="convertArrayToTableData(tab.data)" style="width: 100%">
+                <el-table border :data="convertArrayToTableData(tab.data)" style="width: 100%">
                   <el-table-column v-for="header in getNestedTableHeaders(tab.data)" :key="header" :prop="header"
                     :label="header" header-class-name="custom-table-header">
                     <template #default="scope">
-                      <span class="field-item" @click="jumpToPreview(tab, header)">{{ scope.row[header] }}</span>
+                      <div class="field-with-edit">
+                        <el-tooltip :content="String(scope.row[header])" placement="top" :show-after="500">
+                          <span class="field-item truncated-text" @click="jumpToPreview(tab, header)">{{
+                            scope.row[header] }}</span>
+                        </el-tooltip>
+                        <el-icon class="edit-icon" @click="handleEdit(scope.row, header)">
+                          <Edit />
+                        </el-icon>
+                      </div>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -163,6 +194,21 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- Add edit dialog -->
+    <el-dialog v-model="editDialogVisible" title="Edit Field" width="30%">
+      <el-form>
+        <el-form-item label="Value">
+          <el-input v-model="editingValue" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="editDialogVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="handleEditSave">Save</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -182,6 +228,7 @@ import type {
 import axios from "axios";
 import fileUploadJson from "../assets/file-upload.json"
 import localFieldMapJson from '../assets/local-field-map.json'
+import { Edit } from '@element-plus/icons-vue'
 
 // Define file categories
 const fileCategories = ref<FileCategory[]>([
@@ -224,6 +271,15 @@ const isDialogFullScreen = ref(false);
 const jsonTabs = ref<JsonTab[]>([]);
 const activeTab = ref("0");
 
+// Add new refs for edit functionality
+const editDialogVisible = ref(false);
+const editingValue = ref('');
+const editingContext = ref<{
+  data: any;
+  key: string;
+  type: 'table' | 'description';
+} | null>(null);
+
 // Computed properties
 const hasUploadedFiles = computed(() => {
   if (selectedCategory.value === "no-type") {
@@ -261,7 +317,7 @@ function setFileUploadRef(el: any) {
 function jumpToPreview(tab: JsonTab, field: any, nestedField?: any) {
   let location = (localFieldMapJson as Record<string, any>)[tab.name]?.[field];
   if (nestedField) {
-    location = (localFieldMapJson as Record<string, any>)[tab.name]?.[nestedField]?.[field];
+    location = (localFieldMapJson as Record<string, any>)[tab.name]?.[field]?.[nestedField];
   }
   const [fileBackendId, pageNo] = location?.split('|') || [];
   previewFile(fileBackendId, { pageNo });
@@ -502,6 +558,28 @@ async function generateValue() {
   }
 }
 
+// Add edit handling functions
+function handleEdit(data: any, key: any, type: 'table' | 'description' = 'table') {
+  editingContext.value = { data, key, type };
+  editingValue.value = data[key];
+  editDialogVisible.value = true;
+}
+
+function handleEditSave() {
+  if (editingContext.value) {
+    const { data, key } = editingContext.value;
+    data[key] = editingValue.value;
+    editDialogVisible.value = false;
+    editingContext.value = null;
+
+    ElNotification({
+      title: 'Success',
+      type: 'success',
+      message: 'Field updated successfully',
+    });
+  }
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -735,5 +813,41 @@ async function generateValue() {
 :deep(.el-upload-list__item-name) {
   display: flex;
   justify-content: center;
+}
+
+.field-with-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.truncated-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-icon {
+  cursor: pointer;
+  color: #409EFF;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #66b1ff;
+  }
+}
+
+:deep(.el-descriptions__cell) {
+  .field-with-edit {
+    width: 100%;
+  }
+}
+
+:deep(.el-table__cell) {
+  .field-with-edit {
+    width: 100%;
+  }
 }
 </style>

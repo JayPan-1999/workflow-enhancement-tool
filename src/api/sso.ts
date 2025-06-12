@@ -1,5 +1,4 @@
 // src/auth/login.js
-import type { AccountInfo } from '@azure/msal-browser';
 import { msalInstance } from '../auth';
 
 export async function login() {
