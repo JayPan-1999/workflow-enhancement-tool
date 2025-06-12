@@ -180,8 +180,8 @@ import type {
   PreviewFileParams,
 } from "../types";
 import axios from "axios";
-import fileUploadJson from "../asset/file-upload.json"
-import localFieldMapJson from '../asset/local-field-map.json'
+import fileUploadJson from "../assets/file-upload.json"
+import localFieldMapJson from '../assets/local-field-map.json'
 
 // Define file categories
 const fileCategories = ref<FileCategory[]>([
