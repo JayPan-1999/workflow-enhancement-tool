@@ -2,7 +2,7 @@
   <div class="app-container">
     <!-- Header with dropdown -->
     <div class="header-section">
-      <h2 class="text-center mb-lg">HKLand Lease Document Management</h2>
+      <h2 class="text-center">HKLand Lease Document Management</h2>
       <el-form label-position="top">
         <el-form-item label="Select Document Category">
           <el-select v-model="selectedCategory" placeholder="Select category" @change="handleCategoryChange">
@@ -59,7 +59,13 @@
                           <el-tooltip :content="key" placement="top" :show-after="500">
                             <span class="truncated-text">{{ key }}</span>
                           </el-tooltip>
-                          <el-tooltip :content="getColumnDescription(tab, key)" placement="top">
+                          <el-tooltip placement="top">
+                            <template #content>
+                              <div class="tooltip-title">Documents:</div>
+                              <div>{{ getColumnDescription(tab, key)?.fileName }}</div>
+                              <div class="tooltip-title">Logic:</div>
+                              <div>{{ getColumnDescription(tab, key)?.logic }}</div>
+                            </template>
                             <el-icon class="question-icon">
                               <QuestionFilled />
                             </el-icon>
@@ -96,7 +102,13 @@
                             <el-tooltip :content="header" placement="top" :show-after="500">
                               <span class="truncated-text">{{ header }}</span>
                             </el-tooltip>
-                            <el-tooltip :content="getColumnDescription(tab, key, header)" placement="top">
+                            <el-tooltip placement="top">
+                              <template #content>
+                                <div class="tooltip-title">Documents:</div>
+                                <div>{{ getColumnDescription(tab, key, header)?.fileName }}</div>
+                                <div class="tooltip-title">Logic:</div>
+                                <div>{{ getColumnDescription(tab, key, header)?.logic }}</div>
+                              </template>
                               <el-icon class="question-icon">
                                 <QuestionFilled />
                               </el-icon>
@@ -131,7 +143,13 @@
                             <el-tooltip :content="nestedKey" placement="top" :show-after="500">
                               <span class="truncated-text">{{ nestedKey }}</span>
                             </el-tooltip>
-                            <el-tooltip :content="getColumnDescription(tab, nestedKey)" placement="top">
+                            <el-tooltip placement="top">
+                              <template #content>
+                                <div class="tooltip-title">Documents:</div>
+                                <div>{{ getColumnDescription(tab, nestedKey)?.fileName }}</div>
+                                <div class="tooltip-title">Logic:</div>
+                                <div>{{ getColumnDescription(tab, nestedKey)?.logic }}</div>
+                              </template>
                               <el-icon class="question-icon">
                                 <QuestionFilled />
                               </el-icon>
@@ -169,7 +187,13 @@
                         <el-tooltip :content="header" placement="top" :show-after="500">
                           <span class="truncated-text">{{ header }}</span>
                         </el-tooltip>
-                        <el-tooltip :content="getColumnDescription(tab, header)" placement="top">
+                        <el-tooltip placement="top">
+                          <template #content>
+                            <div class="tooltip-title">Documents:</div>
+                            <div>{{ getColumnDescription(tab, header)?.fileName }}</div>
+                            <div class="tooltip-title">Logic:</div>
+                            <div>{{ getColumnDescription(tab, header)?.logic }}</div>
+                          </template>
                           <el-icon class="question-icon">
                             <QuestionFilled />
                           </el-icon>
@@ -362,12 +386,15 @@ function setFileUploadRef(el: any) {
   }
 }
 
-function getColumnDescription(tab: JsonTab, field: any, nestedField?: any): string {
-  let tip = (descriptionFieldMapJson as Record<string, any>)[tab.name]?.[field];
+function getColumnDescription(tab: JsonTab, field: any, nestedField?: any) {
+  let logic = (descriptionFieldMapJson as Record<string, any>)[tab.name]?.[field];
   if (nestedField) {
-    tip = (descriptionFieldMapJson as Record<string, any>)[tab.name]?.[field]?.[nestedField];
+    logic = (descriptionFieldMapJson as Record<string, any>)[tab.name]?.[field]?.[nestedField];
   }
-  return tip || "";
+  return {
+    logic,
+    fileName: tab.name
+  };
 
 }
 
@@ -669,11 +696,10 @@ function handleEditSave() {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding: 20px;
+  padding: 10px;
 }
 
 .header-section {
-  padding: 20px;
   background-color: #fff;
   border-bottom: 1px solid #e6e6e6;
   margin-bottom: 20px;
@@ -880,9 +906,13 @@ function handleEditSave() {
   width: 100%;
 }
 
+.tooltip-title {
+  font-weight: 600;
+}
+
 .truncated-text {
   flex: 1;
-  white-space: nowrap;
+  word-break: break-word;
   overflow: hidden;
   text-overflow: ellipsis;
 }
