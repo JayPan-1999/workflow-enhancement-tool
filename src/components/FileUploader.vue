@@ -18,7 +18,10 @@
       <!-- Left panel -->
       <div class="left-panel">
         <div v-if="selectedCategory" class="upload-section">
-          <h3 class="mb-md">Upload Required Files</h3>
+          <div class="files-preview-menu">
+            <h3 class="mb-md">Upload Required Files</h3>
+            <el-button type="info">Pdf Preview</el-button>
+          </div>
           <div class="required-files">
             <div v-for="fileType in getRequiredFiles()" :key="fileType.name" class="file-upload-item">
               <div class="file-type-name">
@@ -33,7 +36,7 @@
               <div v-if="getUploadedFile(fileType.backendField)" class="uploaded-file mt-sm">
                 <el-tag type="success">
                   <el-text truncated class="uploaded-file-text">{{ getUploadedFile(fileType.backendField)?.file.name
-                    }}</el-text>
+                  }}</el-text>
                 </el-tag>
                 <el-button type="text" @click="previewFile(fileType.backendField)">Preview</el-button>
               </div>
@@ -740,6 +743,11 @@ function handleEditSave() {
     margin-bottom: 20px;
     color: #303133;
   }
+}
+
+.files-preview-menu {
+  display: flex;
+  justify-content: space-between;
 }
 
 .file-upload-item {
